@@ -471,7 +471,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.19",
+  version:       "v0.91.20",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1562,7 +1562,7 @@ async function saveAndNext() {
   renderHof(hofMode, entries.length ? entries : await hofFetch(hofMode));
   logEvent('exercise_complete', {
     wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
-    corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag,
+    corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag, country,
   });
   document.getElementById("modalOverlay").hidden = true;
   startExercise();

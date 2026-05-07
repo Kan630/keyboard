@@ -161,11 +161,12 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Event log — last <?= min(count($events),500) ?> of <?= count($events) ?></h2>
 <?php $shown = array_slice($events, 0, 500); ?>
 <table>
-  <tr><th>Time</th><th>Event</th><th>IP</th><th>Layout</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Duration</th><th>Mode</th><th>Pack</th></tr>
+  <tr><th>Time</th><th>Event</th><th></th><th>IP</th><th>Layout</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Duration</th><th>Mode</th><th>Pack</th></tr>
   <?php foreach ($shown as $e): ?>
   <tr class="<?= ($e['event']??'') === 'visit' ? 'ev-visit' : '' ?>">
     <td class="muted"><?= h($e['ts']??'') ?></td>
     <td><?= h($e['event']??'') ?></td>
+    <td style="font-size:1.1em" title="<?= h($e['country']??'') ?>"><?= $e['flag']??'' ?></td>
     <td class="muted"><?= h($e['ip']??'') ?></td>
     <td><?= h($e['layout']??'') ?></td>
     <td><?= h($e['wpm']??'') ?></td>
