@@ -477,7 +477,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.12",
+  version:       "v0.91.13",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1535,7 +1535,7 @@ async function saveAndNext() {
   const r   = exLastResults;
   const now = new Date();
   const date = now.toLocaleDateString() + ' '
-             + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+             + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const hofMode = mode === "accountant" ? "accountant" : "sentence";
   const pack    = SENTENCE_PACKS[sentPackKey];
   const packTag = pack ? `${pack.code ?? sentPackKey} v${pack.version ?? 1}` : sentPackKey;
