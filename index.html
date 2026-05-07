@@ -379,7 +379,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.02",
+  version:       "v0.90.03",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -727,6 +727,7 @@ let exErrors       = 0;
 let exStartTime    = null;
 let exTimerID      = null;
 let exCompleted    = false;
+let exLastResults  = null;      // frozen at completion, reused for HoF save
 let typed     = [];
 let startTime = null;
 let timerID   = null;
@@ -1059,7 +1060,8 @@ function getExResults() {
 }
 
 function showCompletion() {
-  const r = getExResults();
+  exLastResults = getExResults();               // freeze results now
+  const r = exLastResults;
   document.getElementById("modalStats").innerHTML = `
     <div class="stat"><div class="val">${r.wpm}</div><div class="lbl">WPM</div></div>
     <div class="stat"><div class="val">${r.accuracy}%</div><div class="lbl">Accuracy</div></div>
@@ -1201,9 +1203,11 @@ document.getElementById("btnNextEx").addEventListener("click", function () {
 
 function saveAndNext() {
   const name = document.getElementById("playerName").value.trim() || "Anonymous";
-  const r    = getExResults();
-  hofAdd({ name, wpm: r.wpm, accuracy: r.accuracy, errors: r.errors,
-            date: new Date().toLocaleDateString() });
+  const r    = exLastResults;                   // reuse frozen results
+  const now  = new Date();
+  const date = now.toLocaleDateString() + ' '
+             + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  hofAdd({ name, wpm: r.wpm, accuracy: r.accuracy, errors: r.errors, date });
   logEvent('exercise_complete', {
     wpm: r.wpm, accuracy: r.accuracy, errors: r.errors,
     dur: r.dur, sentmode: exSentMode,
