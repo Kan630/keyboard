@@ -191,6 +191,7 @@
       animation: blink 1s steps(1) infinite;
     }
     @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+    .display .sel { background: rgba(88,166,255,.25); border-radius: 2px; }
 
     .stats { display: flex; gap: 32px; justify-content: center; }
     .stat  { text-align: center; }
@@ -476,7 +477,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.11",
+  version:       "v0.91.12",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -813,6 +814,11 @@ function composeChar(ch) {
   return [ch];
 }
 
+function getSelBounds() {
+  if (selAnchor === null) return null;
+  return { start: Math.min(selAnchor, cursorPos), end: Math.max(selAnchor, cursorPos) };
+}
+
 // ═══════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════
@@ -832,9 +838,11 @@ let exStartTime    = null;
 let exTimerID      = null;
 let exCompleted    = false;
 let exLastResults  = null;      // frozen at completion, reused for HoF save
-let typed     = [];
-let startTime = null;
-let timerID   = null;
+let typed      = [];
+let cursorPos  = 0;    // insertion point in typed array (free mode)
+let selAnchor  = null; // keyboard/mouse selection anchor; null = no selection
+let startTime  = null;
+let timerID    = null;
 let voices    = [];
 let voice     = null;
 const mods    = { shift: false, altgr: false, caps: false };
@@ -984,7 +992,8 @@ document.addEventListener("keydown", e => {
     document.getElementById("numpad").hidden = false;
   }
 
-  if (layout.keys[e.code] || isNumpad || e.code === "Backspace") e.preventDefault();
+  if (layout.keys[e.code] || isNumpad || e.code === "Backspace" || e.code === "Delete"
+      || e.code === "ArrowLeft" || e.code === "ArrowRight") e.preventDefault();
 
   if (held.has(e.code)) return;
   held.add(e.code);
@@ -992,8 +1001,36 @@ document.addEventListener("keydown", e => {
 
   if (mode !== "free") { handleExKey(e, isNumpad); return; }
 
-  if (e.code === "Backspace") {
-    typed.pop();
+  // Arrow keys: move cursor (+ Shift to select)
+  if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+    const dir = e.code === "ArrowLeft" ? -1 : 1;
+    if (e.shiftKey) {
+      if (selAnchor === null) selAnchor = cursorPos;
+      cursorPos = Math.max(0, Math.min(typed.length, cursorPos + dir));
+    } else {
+      if (selAnchor !== null) {
+        const b = getSelBounds();
+        cursorPos = dir < 0 ? b.start : b.end;
+        selAnchor = null;
+      } else {
+        cursorPos = Math.max(0, Math.min(typed.length, cursorPos + dir));
+      }
+    }
+    renderDisplay();
+    return;
+  }
+
+  if (e.code === "Backspace" || e.code === "Delete") {
+    if (selAnchor !== null) {
+      const b = getSelBounds();
+      typed.splice(b.start, b.end - b.start);
+      cursorPos = b.start;
+      selAnchor = null;
+    } else if (e.code === "Backspace") {
+      if (cursorPos > 0) { typed.splice(cursorPos - 1, 1); cursorPos--; }
+    } else {
+      if (cursorPos < typed.length) typed.splice(cursorPos, 1);
+    }
     renderDisplay();
     renderStats();
     return;
@@ -1022,7 +1059,15 @@ document.addEventListener("keydown", e => {
     timerID = setInterval(renderStats, 1000);
   }
 
-  for (const c of chars) { typed.push(c); speak(c); }
+  // Replace selection if active
+  if (selAnchor !== null) {
+    const b = getSelBounds();
+    typed.splice(b.start, b.end - b.start);
+    cursorPos = b.start;
+    selAnchor = null;
+  }
+
+  for (const c of chars) { typed.splice(cursorPos, 0, c); cursorPos++; speak(c); }
   renderDisplay();
   renderStats();
 });
@@ -1032,7 +1077,45 @@ document.addEventListener("keyup", e => {
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = false;
   if (e.code === "AltRight") mods.altgr = false;
   setActive(e.code, false);
-  if (layout.keys[e.code] || e.code in NUMPAD_KEYS || e.code === "Backspace") e.preventDefault();
+  if (layout.keys[e.code] || e.code in NUMPAD_KEYS || e.code === "Backspace" || e.code === "Delete") e.preventDefault();
+});
+
+// Click in display → position cursor (free mode)
+document.getElementById("display").addEventListener("click", e => {
+  if (mode !== "free") return;
+  const target = e.target.closest("[data-index]");
+  if (target) {
+    const idx  = parseInt(target.dataset.index);
+    const rect = target.getBoundingClientRect();
+    cursorPos  = e.clientX > rect.left + rect.width / 2 ? idx + 1 : idx;
+  } else {
+    cursorPos = typed.length;
+  }
+  selAnchor = null;
+  renderDisplay();
+});
+
+// Drag-select in display → set selection range (free mode)
+document.getElementById("display").addEventListener("mouseup", e => {
+  if (mode !== "free") return;
+  const nativeSel = window.getSelection();
+  if (!nativeSel || nativeSel.isCollapsed || !nativeSel.rangeCount) return;
+  const range = nativeSel.getRangeAt(0);
+
+  function nodeToIndex(node, offset) {
+    const el = (node.nodeType === Node.TEXT_NODE ? node.parentElement : node)
+                 ?.closest("[data-index]");
+    return el ? parseInt(el.dataset.index) + (offset > 0 ? 1 : 0) : null;
+  }
+
+  const a = nodeToIndex(range.startContainer, range.startOffset);
+  const b = nodeToIndex(range.endContainer,   range.endOffset);
+  if (a !== null && b !== null && a !== b) {
+    selAnchor = a;
+    cursorPos = b;
+    nativeSel.removeAllRanges();
+    renderDisplay();
+  }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -1040,8 +1123,20 @@ document.addEventListener("keyup", e => {
 // ═══════════════════════════════════════════════════════════
 function renderDisplay() {
   const el  = document.getElementById("display");
-  const txt = typed.map(c => c === " " ? "&nbsp;" : c === "\n" ? "<br>" : x(c)).join("");
-  el.innerHTML = txt + '<span class="cursor"></span>';
+  const sel = getSelBounds();
+  let html  = "";
+  for (let i = 0; i <= typed.length; i++) {
+    if (i === cursorPos) html += '<span class="cursor"></span>';
+    if (i < typed.length) {
+      const c = typed[i];
+      const inSel = sel && i >= sel.start && i < sel.end;
+      const cls   = inSel ? ' class="sel"' : '';
+      html += c === "\n"
+        ? `<span data-index="${i}"${cls}><br></span>`
+        : `<span data-index="${i}"${cls}>${c === " " ? "&nbsp;" : x(c)}</span>`;
+    }
+  }
+  el.innerHTML = html;
 }
 
 function renderStats() {
@@ -1174,7 +1269,7 @@ function autoSkipSpaces() {
 function handleExKey(e, isNumpad) {
   if (exCompleted) return;
 
-  if (e.code === "Backspace") {
+  if (e.code === "Backspace" || e.code === "Delete") {
     if (exTyped.length > 0) {
       exTyped.pop();
       exBackspaces++;
@@ -1459,7 +1554,7 @@ async function saveAndNext() {
 }
 
 function reset() {
-  typed = []; startTime = null;
+  typed = []; cursorPos = 0; selAnchor = null; startTime = null;
   clearInterval(timerID);
   renderDisplay();
   renderStats();
