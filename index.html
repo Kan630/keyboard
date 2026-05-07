@@ -284,11 +284,9 @@
     .hof-rank-2 td   { background: rgba(192,192,192,.04); }
     .hof-rank-3 td   { background: rgba(205,127,50,.04); }
 
-    /* ── Instance badge ── */
+    /* ── Badges ── */
     .badge {
       position: fixed;
-      bottom: 10px;
-      right: 14px;
       font-size: 0.66rem;
       color: var(--text-muted);
       background: var(--surface2);
@@ -296,6 +294,8 @@
       border-radius: 20px;
       padding: 3px 10px;
     }
+    #badge        { bottom: 10px; right: 14px; }
+    #versionBadge { top: 10px; right: 14px; }
   </style>
 </head>
 <body>
@@ -371,6 +371,7 @@
 </div>
 
 <div class="badge" id="badge"></div>
+<div class="badge" id="versionBadge"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════
@@ -378,6 +379,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
+  version:       "v0.90",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1216,7 +1218,8 @@ function reset() {
 // ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
-document.getElementById("badge").textContent = CONFIG.instance;
+document.getElementById("badge").textContent        = CONFIG.instance;
+document.getElementById("versionBadge").textContent = CONFIG.version;
 document.title = `BlindType — ${CONFIG.instance}`;
 renderKeyboard();
 renderNumpad();
