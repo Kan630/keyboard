@@ -442,7 +442,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.09",
+  version:       "v0.90.10",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -825,21 +825,30 @@ const held    = new Set();
 // ═══════════════════════════════════════════════════════════
 //  SPEECH
 // ═══════════════════════════════════════════════════════════
+function voiceQuality(v) {
+  const n = v.name.toLowerCase();
+  if (/espeak|festival|mbrola/.test(n)) return 2;          // robotic — last
+  if (/google|microsoft|apple|premium|neural|natural/.test(n)) return 0; // best — first
+  return 1;                                                  // everything else
+}
+
 function loadVoices() {
-  voices = speechSynthesis.getVoices();
+  const raw = speechSynthesis.getVoices();
+  voices = [...raw].sort((a, b) => {
+    const prefA = a.lang.startsWith(CONFIG.preferLang) ? 0 : 1;
+    const prefB = b.lang.startsWith(CONFIG.preferLang) ? 0 : 1;
+    if (prefA !== prefB) return prefA - prefB;
+    return voiceQuality(a) - voiceQuality(b);
+  });
   const sel = document.getElementById("voiceSel");
   sel.innerHTML = "";
-  const sorted = [
-    ...voices.filter(v => v.lang.startsWith(CONFIG.preferLang)),
-    ...voices.filter(v => !v.lang.startsWith(CONFIG.preferLang)),
-  ];
-  sorted.forEach((v, i) => {
+  voices.forEach((v, i) => {
     const o = document.createElement("option");
     o.value = i;
     o.textContent = `${v.name} (${v.lang})`;
     sel.appendChild(o);
   });
-  voice = sorted[0] ?? null;
+  voice = voices[0] ?? null;
 }
 
 speechSynthesis.addEventListener("voiceschanged", loadVoices);
