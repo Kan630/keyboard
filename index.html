@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlindType — Keyboard Trainer</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:              #0d1117;
+      --surface:         #161b22;
+      --surface2:        #21262d;
+      --border:          #30363d;
+      --accent:          #58a6ff;
+      --text:            #e6edf3;
+      --text-muted:      #8b949e;
+      --key-bg:          #21262d;
+      --key-border:      #30363d;
+      --key-shadow:      #010409;
+      --key-active-bg:   #58a6ff;
+      --key-active-bdr:  #79c0ff;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+      gap: 18px;
+    }
+
+    header { text-align: center; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; }
+    .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
+
+    /* ── Controls ── */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .ctrl-group { display: flex; align-items: center; gap: 6px; }
+    label { font-size: 0.78rem; color: var(--text-muted); }
+
+    select {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+    }
+    select:focus { border-color: var(--accent); }
+
+    button {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background .12s, border-color .12s;
+    }
+    button:hover  { border-color: var(--accent); }
+    button.on     { background: var(--accent); color: #0d1117; border-color: var(--accent); font-weight: 600; }
+
+    /* ── Keyboard ── */
+    .kb-wrap { transition: filter .3s; }
+    .kb-wrap.blind { filter: blur(28px) brightness(0.15); pointer-events: none; }
+
+    .keyboard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      box-shadow: 0 8px 28px rgba(0,0,0,.65);
+    }
+
+    .kb-row { display: flex; gap: 5px; justify-content: center; }
+
+    .key {
+      position: relative;
+      background: var(--key-bg);
+      border: 1px solid var(--key-border);
+      border-bottom: 3px solid var(--key-shadow);
+      border-radius: 6px;
+      min-width: 42px;
+      height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-start;
+      padding: 3px 5px;
+      color: var(--text);
+      transition: background .06s, transform .06s, border-bottom-width .06s;
+      user-select: none;
+    }
+
+    .key.active {
+      background: var(--key-active-bg);
+      border-color: var(--key-active-bdr);
+      border-bottom-width: 1px;
+      transform: translateY(2px);
+      color: #0d1117;
+    }
+
+    .key .main  { font-size: 0.82rem; font-weight: 500; line-height: 1; }
+    .key .shft  { position: absolute; top: 3px; left: 5px; font-size: 0.58rem; color: var(--text-muted); line-height: 1; }
+    .key .agr   { position: absolute; top: 3px; right: 5px; font-size: 0.58rem; color: #79c0ff; line-height: 1; }
+    .key .sp    { font-size: 0.7rem; color: var(--text-muted); }
+    .key.active .shft,
+    .key.active .agr,
+    .key.active .sp  { color: rgba(0,0,0,.55); }
+
+    /* width helpers */
+    .w15 { min-width:  63px; }
+    .w2  { min-width:  89px; }
+    .w25 { min-width: 110px; }
+    .w65 { min-width: 262px; }
+
+    /* ── Practice area ── */
+    .practice {
+      width: 100%;
+      max-width: 740px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .display {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 1.3rem;
+      min-height: 52px;
+      word-break: break-all;
+      line-height: 1.7;
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--accent);
+      vertical-align: text-bottom;
+      border-radius: 1px;
+      animation: blink 1s steps(1) infinite;
+    }
+    @keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
+
+    .stats { display: flex; gap: 32px; justify-content: center; }
+    .stat  { text-align: center; }
+    .stat .val { font-size: 1.6rem; font-weight: 700; color: var(--accent); line-height: 1; }
+    .stat .lbl { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+
+    .practice-footer { display: flex; justify-content: flex-end; }
+
+    /* ── Instance badge ── */
+    .badge {
+      position: fixed;
+      bottom: 10px;
+      right: 14px;
+      font-size: 0.66rem;
+      color: var(--text-muted);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 10px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BlindType</h1>
+  <p class="tagline">Learn to type without looking — audio guided</p>
+</header>
+
+<div class="controls">
+  <div class="ctrl-group">
+    <label for="layoutSel">Layout</label>
+    <select id="layoutSel"></select>
+  </div>
+  <div class="ctrl-group">
+    <label for="voiceSel">Voice</label>
+    <select id="voiceSel"></select>
+  </div>
+  <button id="btnAudio">🔇 Audio</button>
+  <button id="btnBlind">👁 Show keyboard</button>
+</div>
+
+<div class="kb-wrap" id="kbWrap">
+  <div class="keyboard" id="keyboard"></div>
+</div>
+
+<div class="practice">
+  <div class="display" id="display"><span class="cursor"></span></div>
+  <div class="stats">
+    <div class="stat"><div class="val" id="wpm">0</div><div class="lbl">WPM</div></div>
+    <div class="stat"><div class="val" id="keyCount">0</div><div class="lbl">Keys</div></div>
+    <div class="stat"><div class="val" id="duration">0s</div><div class="lbl">Time</div></div>
+  </div>
+  <div class="practice-footer">
+    <button id="btnClear">Clear</button>
+  </div>
+</div>
+
+<div class="badge" id="badge"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG  — change per server instance
+// ═══════════════════════════════════════════════════════════
+const CONFIG = {
+  instance:      "driot.com · A",   // shown in badge bottom-right
+  defaultLayout: "ch-fr-qwertz",
+  audioOn:       false,
+  speechRate:    0.88,
+  preferLang:    "fr",              // preferred TTS language prefix
+};
+
+// ═══════════════════════════════════════════════════════════
+//  LAYOUTS
+//  keys: event.code → [default, shift, altgr]
+//  null = no character on that layer
+// ═══════════════════════════════════════════════════════════
+const LAYOUTS = {
+
+// ──────────────────────────────────────────────────────────
+"ch-fr-qwertz": {
+  name:     "Swiss French QWERTZ",
+  region:   "CH-FR",
+  physical: "iso",
+  lang:     "fr-CH",
+  keys: {
+    // Number row
+    Backquote:    ["§",  "°",  "¦"  ],
+    Digit1:       ["1",  "+",  "|"  ],
+    Digit2:       ["2",  '"',  "@"  ],
+    Digit3:       ["3",  "*",  "#"  ],
+    Digit4:       ["4",  "ç",  null ],
+    Digit5:       ["5",  "%",  null ],
+    Digit6:       ["6",  "&",  "¬"  ],
+    Digit7:       ["7",  "/",  "|"  ],
+    Digit8:       ["8",  "(",  "¢"  ],
+    Digit9:       ["9",  ")",  null ],
+    Digit0:       ["0",  "=",  null ],
+    Minus:        ["'",  "?",  "´"  ],
+    Equal:        ["^",  "`",  "~"  ],
+    // Top row (QWERTZ — Y/Z swapped vs QWERTY)
+    KeyQ:         ["q",  "Q",  null ],
+    KeyW:         ["w",  "W",  null ],
+    KeyE:         ["e",  "E",  "€"  ],
+    KeyR:         ["r",  "R",  null ],
+    KeyT:         ["t",  "T",  null ],
+    KeyY:         ["z",  "Z",  null ],  // physical Y key → Z character
+    KeyU:         ["u",  "U",  null ],
+    KeyI:         ["i",  "I",  null ],
+    KeyO:         ["o",  "O",  null ],
+    KeyP:         ["p",  "P",  null ],
+    BracketLeft:  ["è",  "ü",  "["  ],
+    BracketRight: ["¨",  "!",  "]"  ],  // ¨ = dead diaeresis
+    Backslash:    ["$",  "£",  "}"  ],
+    // Home row
+    KeyA:         ["a",  "A",  null ],
+    KeyS:         ["s",  "S",  null ],
+    KeyD:         ["d",  "D",  null ],
+    KeyF:         ["f",  "F",  null ],
+    KeyG:         ["g",  "G",  null ],
+    KeyH:         ["h",  "H",  null ],
+    KeyJ:         ["j",  "J",  null ],
+    KeyK:         ["k",  "K",  null ],
+    KeyL:         ["l",  "L",  null ],
+    Semicolon:    ["é",  "ö",  null ],
+    Quote:        ["à",  "ä",  "{"  ],
+    // Bottom row (ISO has IntlBackslash between LShift and Y/Z)
+    IntlBackslash:["<",  ">",  "\\" ],
+    KeyZ:         ["y",  "Y",  null ],  // physical Z key → Y character
+    KeyX:         ["x",  "X",  null ],
+    KeyC:         ["c",  "C",  null ],
+    KeyV:         ["v",  "V",  null ],
+    KeyB:         ["b",  "B",  null ],
+    KeyN:         ["n",  "N",  null ],
+    KeyM:         ["m",  "M",  null ],
+    Comma:        [",",  ";",  null ],
+    Period:       [".",  ":",  null ],
+    Slash:        ["-",  "_",  null ],
+    Space:        [" ",  " ",  " "  ],
+  },
+  rows: [
+    [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
+    [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"]],
+    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Backslash"],["Enter","w2","↵"]],
+    [["ShiftLeft","w25","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
+  ],
+},
+
+// ──────────────────────────────────────────────────────────
+"en-us-qwerty": {
+  name:     "English QWERTY (US)",
+  region:   "US",
+  physical: "ansi",
+  lang:     "en-US",
+  keys: {
+    Backquote:    ["`",  "~",  null ],
+    Digit1:       ["1",  "!",  null ],
+    Digit2:       ["2",  "@",  null ],
+    Digit3:       ["3",  "#",  null ],
+    Digit4:       ["4",  "$",  null ],
+    Digit5:       ["5",  "%",  null ],
+    Digit6:       ["6",  "^",  null ],
+    Digit7:       ["7",  "&",  null ],
+    Digit8:       ["8",  "*",  null ],
+    Digit9:       ["9",  "(",  null ],
+    Digit0:       ["0",  ")",  null ],
+    Minus:        ["-",  "_",  null ],
+    Equal:        ["=",  "+",  null ],
+    KeyQ:         ["q",  "Q",  null ],
+    KeyW:         ["w",  "W",  null ],
+    KeyE:         ["e",  "E",  null ],
+    KeyR:         ["r",  "R",  null ],
+    KeyT:         ["t",  "T",  null ],
+    KeyY:         ["y",  "Y",  null ],
+    KeyU:         ["u",  "U",  null ],
+    KeyI:         ["i",  "I",  null ],
+    KeyO:         ["o",  "O",  null ],
+    KeyP:         ["p",  "P",  null ],
+    BracketLeft:  ["[",  "{",  null ],
+    BracketRight: ["]",  "}",  null ],
+    Backslash:    ["\\", "|",  null ],
+    KeyA:         ["a",  "A",  null ],
+    KeyS:         ["s",  "S",  null ],
+    KeyD:         ["d",  "D",  null ],
+    KeyF:         ["f",  "F",  null ],
+    KeyG:         ["g",  "G",  null ],
+    KeyH:         ["h",  "H",  null ],
+    KeyJ:         ["j",  "J",  null ],
+    KeyK:         ["k",  "K",  null ],
+    KeyL:         ["l",  "L",  null ],
+    Semicolon:    [";",  ":",  null ],
+    Quote:        ["'",  '"',  null ],
+    KeyZ:         ["z",  "Z",  null ],
+    KeyX:         ["x",  "X",  null ],
+    KeyC:         ["c",  "C",  null ],
+    KeyV:         ["v",  "V",  null ],
+    KeyB:         ["b",  "B",  null ],
+    KeyN:         ["n",  "N",  null ],
+    KeyM:         ["m",  "M",  null ],
+    Comma:        [",",  "<",  null ],
+    Period:       [".",  ">",  null ],
+    Slash:        ["/",  "?",  null ],
+    Space:        [" ",  " ",  " "  ],
+  },
+  rows: [
+    [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
+    [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"],["Backslash"]],
+    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
+    [["ShiftLeft","w2","⇧"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
+  ],
+},
+
+// ──────────────────────────────────────────────────────────
+"fr-azerty": {
+  name:     "French AZERTY",
+  region:   "FR",
+  physical: "iso",
+  lang:     "fr-FR",
+  keys: {
+    Backquote:    ["²",  null, null ],
+    Digit1:       ["&",  "1",  null ],
+    Digit2:       ["é",  "2",  "~"  ],
+    Digit3:       ['"',  "3",  "#"  ],
+    Digit4:       ["'",  "4",  "{"  ],
+    Digit5:       ["(",  "5",  "["  ],
+    Digit6:       ["-",  "6",  "|"  ],
+    Digit7:       ["è",  "7",  "`"  ],
+    Digit8:       ["_",  "8",  "\\" ],
+    Digit9:       ["ç",  "9",  "^"  ],
+    Digit0:       ["à",  "0",  "@"  ],
+    Minus:        [")",  "°",  "]"  ],
+    Equal:        ["=",  "+",  "}"  ],
+    KeyQ:         ["a",  "A",  null ],
+    KeyW:         ["z",  "Z",  null ],
+    KeyE:         ["e",  "E",  "€"  ],
+    KeyR:         ["r",  "R",  null ],
+    KeyT:         ["t",  "T",  null ],
+    KeyY:         ["y",  "Y",  null ],
+    KeyU:         ["u",  "U",  null ],
+    KeyI:         ["i",  "I",  null ],
+    KeyO:         ["o",  "O",  null ],
+    KeyP:         ["p",  "P",  null ],
+    BracketLeft:  ["^",  "¨",  null ],
+    BracketRight: ["$",  "£",  "¤"  ],
+    Backslash:    ["*",  "μ",  null ],
+    KeyA:         ["q",  "Q",  null ],
+    KeyS:         ["s",  "S",  null ],
+    KeyD:         ["d",  "D",  null ],
+    KeyF:         ["f",  "F",  null ],
+    KeyG:         ["g",  "G",  null ],
+    KeyH:         ["h",  "H",  null ],
+    KeyJ:         ["j",  "J",  null ],
+    KeyK:         ["k",  "K",  null ],
+    KeyL:         ["l",  "L",  null ],
+    Semicolon:    ["m",  "M",  null ],
+    Quote:        ["ù",  "%",  null ],
+    IntlBackslash:["<",  ">",  null ],
+    KeyZ:         ["w",  "W",  null ],
+    KeyX:         ["x",  "X",  null ],
+    KeyC:         ["c",  "C",  null ],
+    KeyV:         ["v",  "V",  null ],
+    KeyB:         ["b",  "B",  null ],
+    KeyN:         ["n",  "N",  null ],
+    KeyM:         [",",  "?",  null ],
+    Comma:        [";",  ".",  null ],
+    Period:       [":",  "/",  null ],
+    Slash:        ["!",  "§",  null ],
+    Space:        [" ",  " ",  " "  ],
+  },
+  rows: [
+    [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
+    [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"],["Backslash"]],
+    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
+    [["ShiftLeft","w25","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
+  ],
+},
+
+}; // end LAYOUTS
+
+// ═══════════════════════════════════════════════════════════
+//  SPOKEN NAMES FOR SYMBOLS
+// ═══════════════════════════════════════════════════════════
+const SPOKEN_FR = {
+  " ":"espace", "@":"arobase", "#":"dièse", "&":"esperluette",
+  "€":"euro", "$":"dollar", "£":"livre sterling", "¢":"cent",
+  "%":"pourcent", "^":"accent circonflexe", "¨":"tréma",
+  "~":"tilde", "`":"accent grave", "´":"accent aigu",
+  "§":"paragraphe", "°":"degré", "²":"carré",
+  "|":"barre verticale", "\\":"antislash", "/":"slash",
+  '"':"guillemet", "'":"apostrophe", "<":"inférieur à",
+  ">":"supérieur à", "¬":"signe non", "¦":"barre brisée",
+  "*":"astérisque", "+":"plus", "-":"tiret", "_":"underscore",
+  "=":"égal", "?":"point d'interrogation", "!":"point d'exclamation",
+  ",":"virgule", ".":"point", ";":"point-virgule", ":":"deux points",
+  "(":"parenthèse ouvrante", ")":"parenthèse fermante",
+  "[":"crochet ouvrant", "]":"crochet fermant",
+  "{":"accolade ouvrante", "}":"accolade fermante",
+  "ç":"cé cédille", "é":"é accent aigu", "è":"è accent grave",
+  "à":"à accent grave", "ù":"u accent grave", "ü":"u tréma",
+  "ö":"o tréma", "ä":"a tréma", "ê":"e accent circonflexe",
+  "¢":"cent", "£":"livre", "¤":"devise",
+};
+
+const SPOKEN_EN = {
+  " ":"space", "@":"at sign", "#":"hash", "&":"ampersand",
+  "€":"euro", "$":"dollar", "£":"pound", "¢":"cent",
+  "%":"percent", "^":"caret", "~":"tilde", "`":"backtick",
+  "§":"section", "°":"degree", "|":"pipe", "\\":"backslash",
+  "/":"slash", '"':"double quote", "'":"apostrophe",
+  "<":"less than", ">":"greater than", "*":"asterisk",
+  "+":"plus", "-":"dash", "_":"underscore", "=":"equals",
+  "?":"question mark", "!":"exclamation", ",":"comma",
+  ".":"period", ";":"semicolon", ":":"colon",
+  "(":"open paren", ")":"close paren",
+  "[":"open bracket", "]":"close bracket",
+  "{":"open brace", "}":"close brace",
+};
+
+function charSpoken(ch) {
+  const map = layout.lang.startsWith("fr") ? SPOKEN_FR : SPOKEN_EN;
+  return map[ch] ?? ch;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let layout    = LAYOUTS[CONFIG.defaultLayout];
+let audioOn   = CONFIG.audioOn;
+let blindMode = false;
+let typed     = [];
+let startTime = null;
+let timerID   = null;
+let voices    = [];
+let voice     = null;
+const mods    = { shift: false, altgr: false, caps: false };
+const held    = new Set();
+
+// ═══════════════════════════════════════════════════════════
+//  SPEECH
+// ═══════════════════════════════════════════════════════════
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  const sel = document.getElementById("voiceSel");
+  sel.innerHTML = "";
+  const sorted = [
+    ...voices.filter(v => v.lang.startsWith(CONFIG.preferLang)),
+    ...voices.filter(v => !v.lang.startsWith(CONFIG.preferLang)),
+  ];
+  sorted.forEach((v, i) => {
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = `${v.name} (${v.lang})`;
+    sel.appendChild(o);
+  });
+  voice = sorted[0] ?? null;
+}
+
+speechSynthesis.addEventListener("voiceschanged", loadVoices);
+loadVoices();
+
+document.getElementById("voiceSel").addEventListener("change", e => {
+  voice = voices[+e.target.value] ?? null;
+});
+
+function speak(ch) {
+  if (!audioOn || !ch) return;
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(charSpoken(ch));
+  utt.rate = CONFIG.speechRate;
+  utt.lang = layout.lang;
+  if (voice) utt.voice = voice;
+  speechSynthesis.speak(utt);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  KEYBOARD RENDER
+// ═══════════════════════════════════════════════════════════
+function renderKeyboard() {
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  layout.rows.forEach(rowDef => {
+    const row = document.createElement("div");
+    row.className = "kb-row";
+    rowDef.forEach(([code, w = "", label]) => {
+      const el = document.createElement("div");
+      el.className = "key" + (w ? " " + w : "");
+      el.dataset.code = code;
+      if (label !== undefined) {
+        el.innerHTML = `<span class="sp">${label}</span>`;
+      } else {
+        const lyr  = layout.keys[code] ?? [];
+        const def  = lyr[0] ?? "";
+        const shft = lyr[1] ?? "";
+        const agr  = lyr[2] ?? "";
+        el.innerHTML =
+          (shft ? `<span class="shft">${x(shft)}</span>` : "") +
+          (agr  ? `<span class="agr">${x(agr)}</span>`   : "") +
+          `<span class="main">${x(def)}</span>`;
+      }
+      row.appendChild(el);
+    });
+    kb.appendChild(row);
+  });
+}
+
+function x(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function setActive(code, on) {
+  document.querySelector(`.key[data-code="${code}"]`)?.classList.toggle("active", on);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INPUT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener("keydown", e => {
+  if (e.code === "Tab") { e.preventDefault(); return; }
+
+  if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = true;
+  if (e.code === "AltRight")  mods.altgr = true;
+  if (e.code === "CapsLock")  mods.caps  = !mods.caps;
+
+  // Block browser shortcuts (Firefox Quick Find on ' and /, etc.)
+  if (layout.keys[e.code] || e.code === "Backspace") e.preventDefault();
+
+  if (held.has(e.code)) return;
+  held.add(e.code);
+  setActive(e.code, true);
+
+  if (e.code === "Backspace") {
+    typed.pop();
+    renderDisplay();
+    renderStats();
+    return;
+  }
+
+  const lyr = layout.keys[e.code];
+  if (!lyr) return;
+
+  let ch = mods.altgr ? (lyr[2] ?? lyr[0]) :
+           mods.shift  ? (lyr[1] ?? lyr[0]) :
+                          lyr[0];
+
+  // CapsLock flips case for basic Latin letters only
+  if (mods.caps && !mods.shift) {
+    if (ch >= "a" && ch <= "z") ch = ch.toUpperCase();
+    else if (ch >= "A" && ch <= "Z") ch = ch.toLowerCase();
+  }
+
+  if (!ch) return;
+
+  if (!startTime) {
+    startTime = Date.now();
+    timerID = setInterval(renderStats, 1000);
+  }
+
+  typed.push(ch);
+  speak(ch);
+  renderDisplay();
+  renderStats();
+});
+
+document.addEventListener("keyup", e => {
+  held.delete(e.code);
+  if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = false;
+  if (e.code === "AltRight") mods.altgr = false;
+  setActive(e.code, false);
+});
+
+// ═══════════════════════════════════════════════════════════
+//  DISPLAY & STATS
+// ═══════════════════════════════════════════════════════════
+function renderDisplay() {
+  const el  = document.getElementById("display");
+  const txt = typed.map(c => c === " " ? "&nbsp;" : x(c)).join("");
+  el.innerHTML = txt + '<span class="cursor"></span>';
+}
+
+function renderStats() {
+  const elapsed = startTime ? (Date.now() - startTime) / 60000 : 0;
+  const wpm = elapsed > 0.005 ? Math.round((typed.length / 5) / elapsed) : 0;
+  const sec = elapsed > 0 ? Math.round(elapsed * 60) : 0;
+  const dur = sec >= 60 ? `${Math.floor(sec/60)}m${sec%60}s` : `${sec}s`;
+  document.getElementById("wpm").textContent      = wpm;
+  document.getElementById("keyCount").textContent = typed.length;
+  document.getElementById("duration").textContent  = startTime ? dur : "0s";
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CONTROLS
+// ═══════════════════════════════════════════════════════════
+const layoutSel = document.getElementById("layoutSel");
+Object.entries(LAYOUTS).forEach(([id, l]) => {
+  const o = document.createElement("option");
+  o.value = id; o.textContent = l.name;
+  o.selected = (id === CONFIG.defaultLayout);
+  layoutSel.appendChild(o);
+});
+layoutSel.addEventListener("change", e => {
+  layout = LAYOUTS[e.target.value];
+  renderKeyboard();
+  loadVoices();
+  reset();
+});
+
+document.getElementById("btnAudio").addEventListener("click", function () {
+  audioOn = !audioOn;
+  this.textContent = audioOn ? "🔊 Audio" : "🔇 Audio";
+  this.classList.toggle("on", audioOn);
+});
+
+document.getElementById("btnBlind").addEventListener("click", function () {
+  blindMode = !blindMode;
+  document.getElementById("kbWrap").classList.toggle("blind", blindMode);
+  this.textContent = blindMode ? "🙈 Blind mode" : "👁 Show keyboard";
+  this.classList.toggle("on", blindMode);
+});
+
+document.getElementById("btnClear").addEventListener("click", reset);
+
+function reset() {
+  typed = []; startTime = null;
+  clearInterval(timerID);
+  renderDisplay();
+  renderStats();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.getElementById("badge").textContent = CONFIG.instance;
+document.title = `BlindType — ${CONFIG.instance}`;
+renderKeyboard();
+renderDisplay();
+</script>
+</body>
+</html>
