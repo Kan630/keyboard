@@ -444,7 +444,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.13",
+  version:       "v0.90.14",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1206,10 +1206,11 @@ function handleExKey(e, isNumpad) {
   }
 
   for (const ch of chars) {
-    exTyped.push(ch);
     autoSkipSpaces();
+    exTyped.push(ch);
     speak(ch);
   }
+  autoSkipSpaces();
   renderExercise();
   renderExStats();
 
