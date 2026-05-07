@@ -444,7 +444,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.14",
+  version:       "v0.90.15",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1222,15 +1222,21 @@ function handleExKey(e, isNumpad) {
 }
 
 function getExResults() {
-  const elapsed   = exStartTime ? (Date.now() - exStartTime) / 60000 : 0;
-  const sentLen   = exSentence.length;
-  const remaining = exTyped.filter((c, i) => c !== exSentence[i]).length;
-  const correct   = sentLen - remaining;
+  const elapsed = exStartTime ? (Date.now() - exStartTime) / 60000 : 0;
+
+  // In accountant mode, spaces are auto-filled — exclude them from scoring
+  const indices = [...exSentence].map((c, i) => i)
+    .filter(i => mode !== "accountant" || exSentence[i] !== " ");
+
+  const remaining = indices.filter(i => (exTyped[i] ?? "") !== exSentence[i]).length;
+  const scored    = indices.length;
+  const correct   = scored - remaining;
   const wpm       = elapsed > 0.005 ? Math.round((correct / 5) / elapsed) : 0;
-  // Accuracy penalises both remaining errors and corrections (backspaces)
-  const accuracy  = Math.round((correct / (sentLen + exBackspaces)) * 100);
-  const sec       = elapsed > 0 ? Math.round(elapsed * 60) : 0;
-  const dur       = sec >= 60 ? `${Math.floor(sec/60)}m${sec%60}s` : `${sec}s`;
+  const accuracy  = scored > 0
+    ? Math.round((correct / (scored + exBackspaces)) * 100)
+    : 0;
+  const sec = elapsed > 0 ? Math.round(elapsed * 60) : 0;
+  const dur = sec >= 60 ? `${Math.floor(sec/60)}m${sec%60}s` : `${sec}s`;
   return { wpm, accuracy, remaining, corrected: exBackspaces, dur };
 }
 
