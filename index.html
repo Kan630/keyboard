@@ -99,6 +99,14 @@
       box-shadow: 0 8px 28px rgba(0,0,0,.65);
     }
 
+    /* Numpad overrides keyboard flex with a real grid */
+    #numpad {
+      display: grid !important;
+      grid-template-columns: repeat(4, 42px);
+      grid-template-rows: repeat(5, 44px);
+    }
+    #numpad .key { height: auto; align-self: stretch; justify-content: center; }
+
     .kb-row { display: flex; gap: 5px; justify-content: center; }
 
     .key {
@@ -457,7 +465,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.00",
+  version:       "v0.91.01",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -700,12 +708,25 @@ const NUMPAD_KEYS = {
   Numpad0:        ["0"],
 };
 
-const NUMPAD_ROWS = [
-  [["NumLock","","⇭"], ["NumpadDivide"],  ["NumpadMultiply"], ["NumpadSubtract"]],
-  [["Numpad7"],        ["Numpad8"],       ["Numpad9"],        ["NumpadAdd"]],
-  [["Numpad4"],        ["Numpad5"],       ["Numpad6"],        ["NumpadEnter","","↵"]],
-  [["Numpad1"],        ["Numpad2"],       ["Numpad3"],        ["NumpadDecimal"]],
-  [["Numpad0","w2"]],
+// r/c = 1-based grid row/col start; rs/cs = row/col span (default 1)
+const NUMPAD_LAYOUT = [
+  { code:"NumLock",        r:1, c:1,        label:"⇭" },
+  { code:"NumpadDivide",   r:1, c:2 },
+  { code:"NumpadMultiply", r:1, c:3 },
+  { code:"NumpadSubtract", r:1, c:4 },
+  { code:"Numpad7",        r:2, c:1 },
+  { code:"Numpad8",        r:2, c:2 },
+  { code:"Numpad9",        r:2, c:3 },
+  { code:"NumpadAdd",      r:2, c:4, rs:2 },  // tall: rows 2-3
+  { code:"Numpad4",        r:3, c:1 },
+  { code:"Numpad5",        r:3, c:2 },
+  { code:"Numpad6",        r:3, c:3 },
+  { code:"Numpad1",        r:4, c:1 },
+  { code:"Numpad2",        r:4, c:2 },
+  { code:"Numpad3",        r:4, c:3 },
+  { code:"NumpadEnter",    r:4, c:4, rs:2, label:"↵" },  // tall: rows 4-5
+  { code:"Numpad0",        r:5, c:1, cs:2 },              // wide: cols 1-2
+  { code:"NumpadDecimal",  r:5, c:3 },
 ];
 
 // ═══════════════════════════════════════════════════════════
@@ -920,22 +941,15 @@ function setActive(code, on) {
 function renderNumpad() {
   const np = document.getElementById("numpad");
   np.innerHTML = "";
-  NUMPAD_ROWS.forEach(rowDef => {
-    const row = document.createElement("div");
-    row.className = "kb-row";
-    rowDef.forEach(([code, w = "", label]) => {
-      const el = document.createElement("div");
-      el.className = "key" + (w ? " " + w : "");
-      el.dataset.code = code;
-      if (label !== undefined) {
-        el.innerHTML = `<span class="sp">${label}</span>`;
-      } else {
-        const ch = NUMPAD_KEYS[code]?.[0] ?? "";
-        el.innerHTML = `<span class="main">${x(ch === "\n" ? "↵" : String(ch))}</span>`;
-      }
-      row.appendChild(el);
-    });
-    np.appendChild(row);
+  NUMPAD_LAYOUT.forEach(({ code, r, c, rs = 1, cs = 1, label }) => {
+    const el = document.createElement("div");
+    el.className = "key";
+    el.dataset.code = code;
+    el.style.gridArea = `${r} / ${c} / ${r + rs} / ${c + cs}`;
+    const ch = NUMPAD_KEYS[code]?.[0];
+    const text = label ?? (ch === "\n" ? "↵" : ch == null ? "" : x(String(ch)));
+    el.innerHTML = `<span class="${label ? "sp" : "main"}">${text}</span>`;
+    np.appendChild(el);
   });
 }
 
