@@ -19,6 +19,23 @@ function hof_read($mode) {
   return is_array($data) ? $data : [];
 }
 
+function get_country($ip) {
+  if (empty($ip)) return '';
+  if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) return '';
+  $ctx  = stream_context_create(['http' => ['timeout' => 3]]);
+  $resp = @file_get_contents('http://ip-api.com/json/' . rawurlencode($ip) . '?fields=countryCode', false, $ctx);
+  if (!$resp) return '';
+  $data = json_decode($resp, true);
+  return $data['countryCode'] ?? '';
+}
+
+function flag_emoji($code) {
+  $code = strtoupper(trim($code ?? ''));
+  if (strlen($code) !== 2 || !ctype_alpha($code)) return '';
+  $base = 0x1F1E6 - ord('A');
+  return mb_chr(ord($code[0]) + $base, 'UTF-8') . mb_chr(ord($code[1]) + $base, 'UTF-8');
+}
+
 // ── GET: return top 10 for a mode ───────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $mode = $_GET['mode'] ?? '';
@@ -37,6 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $mode = $body['mode'] ?? '';
   if (!in_array($mode, $allowed, true)) { http_response_code(400); echo '{"ok":false}'; exit; }
 
+  $ip      = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? '';
+  if (strpos($ip, ',') !== false) $ip = trim(explode(',', $ip)[0]);
+  $country = get_country($ip);
+  $flag    = flag_emoji($country);
+
   $e = $body['entry'] ?? [];
   $record = [
     'name'      => substr(strip_tags($e['name']      ?? 'Anonymous'), 0, 24),
@@ -45,6 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'remaining' => (int)($e['remaining'] ?? 0),
     'corrected' => (int)($e['corrected'] ?? 0),
     'pack'      => substr(strip_tags($e['pack']      ?? ''), 0, 32),
+    'flag'      => $flag,
+    'country'   => $country,
     'date'      => substr($e['date']     ?? '', 0, 32),
     'ts'        => date('c'),
   ];

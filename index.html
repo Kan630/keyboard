@@ -478,7 +478,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.14",
+  version:       "v0.91.15",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1380,7 +1380,7 @@ function renderHof(m, entries) {
   const medals = ["🥇","🥈","🥉"];
   document.getElementById(tableId).innerHTML = `
     <tr>
-      <th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th>
+      <th>#</th><th></th><th>Name</th><th>WPM</th><th>Accuracy</th>
       <th title="Wrong chars at end">Remaining</th>
       <th title="Backspaces used">Corrections</th>
       <th>Pack</th><th>Date</th>
@@ -1388,6 +1388,7 @@ function renderHof(m, entries) {
     ${entries.map((e, i) => `
       <tr class="${i < 3 ? "hof-rank-"+(i+1) : ""}">
         <td class="rank">${medals[i] ?? i+1}</td>
+        <td style="font-size:1.1em" title="${x(e.country ?? "")}">${e.flag ?? ""}</td>
         <td class="name">${x(e.name)}</td>
         <td class="wpm">${e.wpm}</td>
         <td>${e.accuracy}%</td>

@@ -117,10 +117,11 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Hall of Fame — Writer (all <?= count($hof_s) ?> entries)</h2>
 <?php if ($hof_s): ?>
 <table>
-  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
+  <tr><th>#</th><th>Flag</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
   <?php foreach ($hof_s as $i => $e): ?>
   <tr>
     <td class="muted"><?= $i+1 ?></td>
+    <td title="<?= h($e['country']??'') ?>"><?= $e['flag']??'' ?></td>
     <td><?= h($e['name']) ?></td>
     <td class="ok"><?= h($e['wpm']) ?></td>
     <td><?= h($e['accuracy']) ?>%</td>
@@ -138,10 +139,11 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Hall of Fame — Accountant (all <?= count($hof_a) ?> entries)</h2>
 <?php if ($hof_a): ?>
 <table>
-  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
+  <tr><th>#</th><th>Flag</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
   <?php foreach ($hof_a as $i => $e): ?>
   <tr>
     <td class="muted"><?= $i+1 ?></td>
+    <td title="<?= h($e['country']??'') ?>"><?= $e['flag']??'' ?></td>
     <td><?= h($e['name']) ?></td>
     <td class="ok"><?= h($e['wpm']) ?></td>
     <td><?= h($e['accuracy']) ?>%</td>
