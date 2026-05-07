@@ -859,6 +859,7 @@ function renderNumpad() {
 //  INPUT
 // ═══════════════════════════════════════════════════════════
 document.addEventListener("keydown", e => {
+  if (document.activeElement.tagName === "INPUT") return;
   if (e.code === "Tab") { e.preventDefault(); return; }
 
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = true;
