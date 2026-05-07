@@ -42,6 +42,13 @@
     /* ── Controls ── */
     .controls {
       display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .ctrl-row {
+      display: flex;
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
@@ -354,18 +361,22 @@
 </div>
 
 <div class="controls">
-  <div class="ctrl-group">
-    <label for="layoutSel">Layout</label>
-    <select id="layoutSel"></select>
+  <div class="ctrl-row">
+    <div class="ctrl-group">
+      <label for="layoutSel">Layout</label>
+      <select id="layoutSel"></select>
+    </div>
+    <button id="btnBlind">👁 Show keyboard</button>
+    <button id="btnNumpad">⌨ Numpad</button>
   </div>
-  <div class="ctrl-group">
-    <label for="voiceSel">Voice</label>
-    <select id="voiceSel"></select>
+  <div class="ctrl-row">
+    <div class="ctrl-group">
+      <label for="voiceSel">Voice</label>
+      <select id="voiceSel"></select>
+    </div>
+    <button id="btnAudio">🔇 Audio</button>
+    <button id="btnAudioMode">Per key</button>
   </div>
-  <button id="btnAudio">🔇 Audio</button>
-  <button id="btnAudioMode">Per key</button>
-  <button id="btnBlind">👁 Show keyboard</button>
-  <button id="btnNumpad">⌨ Numpad</button>
 </div>
 
 <div class="kb-wrap" id="kbWrap">
@@ -431,7 +442,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.08",
+  version:       "v0.90.09",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
