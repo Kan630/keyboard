@@ -478,7 +478,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.15",
+  version:       "v0.91.16",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1366,9 +1366,27 @@ async function hofPost(entry, m) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mode: m, entry }),
     });
+    if (!r.ok) return [];
     const j = await r.json();
     return j.entries ?? [];
   } catch { return []; }
+}
+
+// Country code fetched once in background, cached for the session
+let _countryCache = null;
+async function getCountryCode() {
+  if (_countryCache !== null) return _countryCache;
+  try {
+    const ctrl  = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 4000);
+    const r     = await fetch('https://ipapi.co/country/', { signal: ctrl.signal });
+    clearTimeout(timer);
+    const code  = (await r.text()).trim().toUpperCase();
+    _countryCache = /^[A-Z]{2}$/.test(code) ? code : '';
+  } catch {
+    _countryCache = '';
+  }
+  return _countryCache;
 }
 
 function renderHof(m, entries) {
@@ -1541,12 +1559,14 @@ async function saveAndNext() {
   const hofMode = mode === "accountant" ? "accountant" : "sentence";
   const pack    = SENTENCE_PACKS[sentPackKey];
   const packTag = pack ? `${pack.code ?? sentPackKey} v${pack.version ?? 1}` : sentPackKey;
+  const country = await getCountryCode();
   const entries = await hofPost(
     { name, wpm: r.wpm, accuracy: r.accuracy,
-      remaining: r.remaining, corrected: r.corrected, date, pack: packTag },
+      remaining: r.remaining, corrected: r.corrected, date, pack: packTag, country },
     hofMode
   );
-  renderHof(hofMode, entries);
+  // If post failed, fall back to a fresh GET so the panel never disappears
+  renderHof(hofMode, entries.length ? entries : await hofFetch(hofMode));
   logEvent('exercise_complete', {
     wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
     corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag,
@@ -1589,6 +1609,7 @@ renderNumpad();
 renderDisplay();
 refreshHof("sentence");
 refreshHof("accountant");
+getCountryCode();  // pre-fetch in background; result cached for HoF submission
 logEvent('visit');
 </script>
 </body>
