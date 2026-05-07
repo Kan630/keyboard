@@ -476,7 +476,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.10",
+  version:       "v0.91.11",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1484,6 +1484,9 @@ document.getElementById("badge").textContent        = CONFIG.instance;
 document.getElementById("versionBadge").textContent = CONFIG.version;
 document.title = `Keyboard Master — ${CONFIG.instance}`;
 setPlayerBadge(localStorage.getItem("kbm_player") || "");
+document.getElementById("numpad").hidden = true;
+numpadVisible  = false;
+numpadDetected = false;
 renderKeyboard();
 renderNumpad();
 renderDisplay();
