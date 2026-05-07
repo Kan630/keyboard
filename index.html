@@ -78,6 +78,7 @@
     /* ── Keyboard ── */
     .kb-wrap { transition: filter .3s; }
     .kb-wrap.blind { filter: blur(28px) brightness(0.15); pointer-events: none; }
+    .kb-main-row { display: flex; gap: 12px; align-items: flex-start; }
 
     .keyboard {
       background: var(--surface);
@@ -202,11 +203,16 @@
     <select id="voiceSel"></select>
   </div>
   <button id="btnAudio">🔇 Audio</button>
+  <button id="btnAudioMode">Per key</button>
   <button id="btnBlind">👁 Show keyboard</button>
+  <button id="btnNumpad">⌨ Numpad</button>
 </div>
 
 <div class="kb-wrap" id="kbWrap">
-  <div class="keyboard" id="keyboard"></div>
+  <div class="kb-main-row">
+    <div class="keyboard" id="keyboard"></div>
+    <div class="keyboard" id="numpad" hidden></div>
+  </div>
 </div>
 
 <div class="practice">
@@ -302,6 +308,7 @@ const LAYOUTS = {
     Period:       [".",  ":",  null ],
     Slash:        ["-",  "_",  null ],
     Space:        [" ",  " ",  " "  ],
+    Enter:        ["\n", "\n", null ],
   },
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
@@ -367,6 +374,7 @@ const LAYOUTS = {
     Period:       [".",  ">",  null ],
     Slash:        ["/",  "?",  null ],
     Space:        [" ",  " ",  " "  ],
+    Enter:        ["\n", "\n", null ],
   },
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
@@ -433,6 +441,7 @@ const LAYOUTS = {
     Period:       [":",  "/",  null ],
     Slash:        ["!",  "§",  null ],
     Space:        [" ",  " ",  " "  ],
+    Enter:        ["\n", "\n", null ],
   },
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
@@ -446,10 +455,41 @@ const LAYOUTS = {
 }; // end LAYOUTS
 
 // ═══════════════════════════════════════════════════════════
+//  NUMPAD
+// ═══════════════════════════════════════════════════════════
+const NUMPAD_KEYS = {
+  NumLock:        [null],
+  NumpadDivide:   ["/"],
+  NumpadMultiply: ["*"],
+  NumpadSubtract: ["-"],
+  Numpad7:        ["7"],
+  Numpad8:        ["8"],
+  Numpad9:        ["9"],
+  NumpadAdd:      ["+"],
+  Numpad4:        ["4"],
+  Numpad5:        ["5"],
+  Numpad6:        ["6"],
+  NumpadEnter:    ["\n"],
+  Numpad1:        ["1"],
+  Numpad2:        ["2"],
+  Numpad3:        ["3"],
+  NumpadDecimal:  ["."],
+  Numpad0:        ["0"],
+};
+
+const NUMPAD_ROWS = [
+  [["NumLock","","⇭"], ["NumpadDivide"],  ["NumpadMultiply"], ["NumpadSubtract"]],
+  [["Numpad7"],        ["Numpad8"],       ["Numpad9"],        ["NumpadAdd"]],
+  [["Numpad4"],        ["Numpad5"],       ["Numpad6"],        ["NumpadEnter","","↵"]],
+  [["Numpad1"],        ["Numpad2"],       ["Numpad3"],        ["NumpadDecimal"]],
+  [["Numpad0","w2"]],
+];
+
+// ═══════════════════════════════════════════════════════════
 //  SPOKEN NAMES FOR SYMBOLS
 // ═══════════════════════════════════════════════════════════
 const SPOKEN_FR = {
-  " ":"espace", "@":"arobase", "#":"dièse", "&":"esperluette",
+  " ":"espace", "\n":"entrée", "@":"arobase", "#":"dièse", "&":"esperluette",
   "€":"euro", "$":"dollar", "£":"livre sterling", "¢":"cent",
   "%":"pourcent", "^":"accent circonflexe", "¨":"tréma",
   "~":"tilde", "`":"accent grave", "´":"accent aigu",
@@ -470,7 +510,7 @@ const SPOKEN_FR = {
 };
 
 const SPOKEN_EN = {
-  " ":"space", "@":"at sign", "#":"hash", "&":"ampersand",
+  " ":"space", "\n":"enter", "@":"at sign", "#":"hash", "&":"ampersand",
   "€":"euro", "$":"dollar", "£":"pound", "¢":"cent",
   "%":"percent", "^":"caret", "~":"tilde", "`":"backtick",
   "§":"section", "°":"degree", "|":"pipe", "\\":"backslash",
@@ -492,9 +532,12 @@ function charSpoken(ch) {
 // ═══════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════
-let layout    = LAYOUTS[CONFIG.defaultLayout];
-let audioOn   = CONFIG.audioOn;
-let blindMode = false;
+let layout         = LAYOUTS[CONFIG.defaultLayout];
+let audioOn        = CONFIG.audioOn;
+let audioMode      = "key";   // "key" | "word"
+let blindMode      = false;
+let numpadVisible  = false;
+let numpadDetected = false;
 let typed     = [];
 let startTime = null;
 let timerID   = null;
@@ -532,6 +575,21 @@ document.getElementById("voiceSel").addEventListener("change", e => {
 
 function speak(ch) {
   if (!audioOn || !ch) return;
+  if (audioMode === "word") {
+    // speak when a word boundary is typed (space, enter, punctuation)
+    if (ch === " " || ch === "\n") {
+      const words = typed.join("").trim().split(/[\s\n]+/);
+      const last  = words[words.length - 1];
+      if (!last) return;
+      speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(last);
+      utt.rate = CONFIG.speechRate;
+      utt.lang = layout.lang;
+      if (voice) utt.voice = voice;
+      speechSynthesis.speak(utt);
+    }
+    return;
+  }
   speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(charSpoken(ch));
   utt.rate = CONFIG.speechRate;
@@ -576,7 +634,29 @@ function x(s) {
 }
 
 function setActive(code, on) {
-  document.querySelector(`.key[data-code="${code}"]`)?.classList.toggle("active", on);
+  document.querySelectorAll(`.key[data-code="${code}"]`).forEach(el => el.classList.toggle("active", on));
+}
+
+function renderNumpad() {
+  const np = document.getElementById("numpad");
+  np.innerHTML = "";
+  NUMPAD_ROWS.forEach(rowDef => {
+    const row = document.createElement("div");
+    row.className = "kb-row";
+    rowDef.forEach(([code, w = "", label]) => {
+      const el = document.createElement("div");
+      el.className = "key" + (w ? " " + w : "");
+      el.dataset.code = code;
+      if (label !== undefined) {
+        el.innerHTML = `<span class="sp">${label}</span>`;
+      } else {
+        const ch = NUMPAD_KEYS[code]?.[0] ?? "";
+        el.innerHTML = `<span class="main">${x(ch === "\n" ? "↵" : String(ch))}</span>`;
+      }
+      row.appendChild(el);
+    });
+    np.appendChild(row);
+  });
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -589,8 +669,17 @@ document.addEventListener("keydown", e => {
   if (e.code === "AltRight")  mods.altgr = true;
   if (e.code === "CapsLock")  mods.caps  = !mods.caps;
 
-  // Block browser shortcuts (Firefox Quick Find on ' and /, etc.)
-  if (layout.keys[e.code] || e.code === "Backspace") e.preventDefault();
+  const isNumpad = e.code in NUMPAD_KEYS;
+
+  // Auto-detect numpad on first numpad keypress
+  if (isNumpad && !numpadDetected) {
+    numpadDetected = true;
+    numpadVisible  = true;
+    document.getElementById("numpad").hidden = false;
+    document.getElementById("btnNumpad").classList.add("on");
+  }
+
+  if (layout.keys[e.code] || isNumpad || e.code === "Backspace") e.preventDefault();
 
   if (held.has(e.code)) return;
   held.add(e.code);
@@ -603,15 +692,15 @@ document.addEventListener("keydown", e => {
     return;
   }
 
-  const lyr = layout.keys[e.code];
+  const lyr = isNumpad ? NUMPAD_KEYS[e.code] : layout.keys[e.code];
   if (!lyr) return;
 
-  let ch = mods.altgr ? (lyr[2] ?? lyr[0]) :
+  let ch = isNumpad ? (lyr[0] ?? null) :
+           mods.altgr ? (lyr[2] ?? lyr[0]) :
            mods.shift  ? (lyr[1] ?? lyr[0]) :
                           lyr[0];
 
-  // CapsLock flips case for basic Latin letters only
-  if (mods.caps && !mods.shift) {
+  if (!isNumpad && mods.caps && !mods.shift) {
     if (ch >= "a" && ch <= "z") ch = ch.toUpperCase();
     else if (ch >= "A" && ch <= "Z") ch = ch.toLowerCase();
   }
@@ -634,7 +723,7 @@ document.addEventListener("keyup", e => {
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = false;
   if (e.code === "AltRight") mods.altgr = false;
   setActive(e.code, false);
-  if (layout.keys[e.code] || e.code === "Backspace") e.preventDefault();
+  if (layout.keys[e.code] || e.code in NUMPAD_KEYS || e.code === "Backspace") e.preventDefault();
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -642,7 +731,7 @@ document.addEventListener("keyup", e => {
 // ═══════════════════════════════════════════════════════════
 function renderDisplay() {
   const el  = document.getElementById("display");
-  const txt = typed.map(c => c === " " ? "&nbsp;" : x(c)).join("");
+  const txt = typed.map(c => c === " " ? "&nbsp;" : c === "\n" ? "<br>" : x(c)).join("");
   el.innerHTML = txt + '<span class="cursor"></span>';
 }
 
@@ -680,6 +769,13 @@ document.getElementById("btnAudio").addEventListener("click", function () {
   this.blur();
 });
 
+document.getElementById("btnAudioMode").addEventListener("click", function () {
+  audioMode = audioMode === "key" ? "word" : "key";
+  this.textContent = audioMode === "key" ? "Per key" : "Per word";
+  this.classList.toggle("on", audioMode === "word");
+  this.blur();
+});
+
 document.getElementById("btnBlind").addEventListener("click", function () {
   blindMode = !blindMode;
   document.getElementById("kbWrap").classList.toggle("blind", blindMode);
@@ -689,6 +785,13 @@ document.getElementById("btnBlind").addEventListener("click", function () {
 });
 
 document.getElementById("btnClear").addEventListener("click", function () { reset(); this.blur(); });
+
+document.getElementById("btnNumpad").addEventListener("click", function () {
+  numpadVisible = !numpadVisible;
+  document.getElementById("numpad").hidden = !numpadVisible;
+  this.classList.toggle("on", numpadVisible);
+  this.blur();
+});
 
 function reset() {
   typed = []; startTime = null;
@@ -703,6 +806,7 @@ function reset() {
 document.getElementById("badge").textContent = CONFIG.instance;
 document.title = `BlindType — ${CONFIG.instance}`;
 renderKeyboard();
+renderNumpad();
 renderDisplay();
 </script>
 </body>
