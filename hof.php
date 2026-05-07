@@ -1,19 +1,35 @@
 <?php
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
 
 $allowed = ['sentence', 'accountant'];
 
-// ── GET: return current HoF for a mode ──────────────────────────────────────
+function hof_sort(&$list) {
+  usort($list, function($a, $b) {
+    $ra = $a['remaining'] ?? 0; $rb = $b['remaining'] ?? 0;
+    if ($ra !== $rb) return $ra - $rb;
+    if ($b['accuracy'] !== $a['accuracy']) return $b['accuracy'] - $a['accuracy'];
+    return $b['wpm'] - $a['wpm'];
+  });
+}
+
+function hof_read($mode) {
+  $file = __DIR__ . "/data/hof_{$mode}.json";
+  if (!file_exists($file)) return [];
+  $data = json_decode(file_get_contents($file), true);
+  return is_array($data) ? $data : [];
+}
+
+// ── GET: return top 10 for a mode ───────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $mode = $_GET['mode'] ?? '';
   if (!in_array($mode, $allowed, true)) { http_response_code(400); echo '[]'; exit; }
-  $file = __DIR__ . "/data/hof_{$mode}.json";
-  echo file_exists($file) ? file_get_contents($file) : '[]';
+  $list = hof_read($mode);
+  hof_sort($list);
+  echo json_encode(array_slice($list, 0, 10));
   exit;
 }
 
-// ── POST: add entry, sort, trim to top 10, persist ──────────────────────────
+// ── POST: append entry to full history, persist, return top 10 ──────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $body = json_decode(file_get_contents('php://input'), true);
   if (!$body) { http_response_code(400); echo '{"ok":false}'; exit; }
@@ -29,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'remaining' => (int)($e['remaining'] ?? 0),
     'corrected' => (int)($e['corrected'] ?? 0),
     'date'      => substr($e['date']     ?? '', 0, 32),
+    'ts'        => date('c'),
   ];
 
   $file = __DIR__ . "/data/hof_{$mode}.json";
@@ -37,17 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $content = stream_get_contents($fp);
   $list    = $content ? (json_decode($content, true) ?? []) : [];
-
-  $list[] = $record;
-
-  usort($list, function($a, $b) {
-    $ra = $a['remaining'] ?? 0; $rb = $b['remaining'] ?? 0;
-    if ($ra !== $rb) return $ra - $rb;
-    if ($b['accuracy'] !== $a['accuracy']) return $b['accuracy'] - $a['accuracy'];
-    return $b['wpm'] - $a['wpm'];
-  });
-
-  $list = array_slice($list, 0, 10);
+  $list[]  = $record;               // keep full history
 
   rewind($fp);
   ftruncate($fp, 0);
@@ -55,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   flock($fp, LOCK_UN);
   fclose($fp);
 
-  echo json_encode(['ok' => true, 'entries' => $list]);
+  hof_sort($list);
+  echo json_encode(['ok' => true, 'entries' => array_slice($list, 0, 10)]);
   exit;
 }
 
