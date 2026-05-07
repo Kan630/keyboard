@@ -172,6 +172,117 @@
 
     .practice-footer { display: flex; justify-content: flex-end; }
 
+    /* ── Exercise mode ── */
+    .exercise-panel {
+      width: 100%;
+      max-width: 740px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .ex-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .ex-sent-btns { display: flex; gap: 4px; }
+
+    .exercise-target {
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 1.25rem;
+      line-height: 1.8;
+      min-height: 52px;
+      word-break: break-word;
+    }
+
+    .ch-ok   { color: #3fb950; }
+    .ch-err  { color: #f85149; text-decoration: underline wavy; }
+    .ch-cur  { background: var(--accent); color: #0d1117; border-radius: 2px; padding: 0 1px; }
+    .ch-todo { color: var(--text-muted); }
+
+    /* ── Completion modal ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-width: 340px;
+      box-shadow: 0 16px 48px rgba(0,0,0,.8);
+    }
+
+    .modal h2 { color: var(--accent); font-size: 1.4rem; text-align: center; }
+    .modal-stats { display: flex; gap: 20px; justify-content: center; }
+
+    .modal input[type="text"] {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.9rem;
+      outline: none;
+      width: 100%;
+    }
+    .modal input[type="text"]:focus { border-color: var(--accent); }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+    /* ── Hall of Fame ── */
+    .hof-panel {
+      width: 100%;
+      max-width: 740px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .hof-panel h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 12px;
+      letter-spacing: .05em;
+    }
+
+    .hof-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .hof-table th {
+      color: var(--text-muted);
+      text-align: left;
+      padding: 4px 10px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 500;
+    }
+    .hof-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+    .hof-table tr:last-child td { border-bottom: none; }
+    .hof-table .rank { color: var(--text-muted); font-size: 1rem; }
+    .hof-table .name { font-weight: 600; }
+    .hof-table .wpm  { color: var(--accent); font-weight: 700; font-size: 1rem; }
+    .hof-rank-1 td   { background: rgba(255,215,0,.06); }
+    .hof-rank-2 td   { background: rgba(192,192,192,.04); }
+    .hof-rank-3 td   { background: rgba(205,127,50,.04); }
+
     /* ── Instance badge ── */
     .badge {
       position: fixed;
@@ -206,6 +317,7 @@
   <button id="btnAudioMode">Per key</button>
   <button id="btnBlind">👁 Show keyboard</button>
   <button id="btnNumpad">⌨ Numpad</button>
+  <button id="btnMode">Exercise</button>
 </div>
 
 <div class="kb-wrap" id="kbWrap">
@@ -215,15 +327,45 @@
   </div>
 </div>
 
+<div class="exercise-panel" id="exercisePanel" hidden>
+  <div class="ex-controls">
+    <div class="ex-sent-btns">
+      <button id="btnExSee" class="on">See</button>
+      <button id="btnExHear">Hear</button>
+      <button id="btnExBoth">Both</button>
+      <button id="btnRepeat" title="Repeat sentence">↺ Repeat</button>
+    </div>
+    <button id="btnNewSentence">↺ New sentence</button>
+  </div>
+  <div class="exercise-target" id="exerciseTarget"></div>
+</div>
+
 <div class="practice">
   <div class="display" id="display"><span class="cursor"></span></div>
   <div class="stats">
     <div class="stat"><div class="val" id="wpm">0</div><div class="lbl">WPM</div></div>
     <div class="stat"><div class="val" id="keyCount">0</div><div class="lbl">Keys</div></div>
     <div class="stat"><div class="val" id="duration">0s</div><div class="lbl">Time</div></div>
+    <div class="stat" id="statErrors" hidden><div class="val" id="errCount">0</div><div class="lbl">Errors</div></div>
   </div>
   <div class="practice-footer">
     <button id="btnClear">Clear</button>
+  </div>
+</div>
+
+<div class="hof-panel" id="hofPanel" hidden>
+  <h2>Hall of Fame</h2>
+  <table class="hof-table" id="hofTable"></table>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal">
+    <h2>Completed!</h2>
+    <div class="modal-stats" id="modalStats"></div>
+    <input type="text" id="playerName" placeholder="Your name… (Enter to confirm)" maxlength="24" autocomplete="off">
+    <div class="modal-actions">
+      <button id="btnNextEx">Next sentence →</button>
+    </div>
   </div>
 </div>
 
@@ -486,6 +628,42 @@ const NUMPAD_ROWS = [
 ];
 
 // ═══════════════════════════════════════════════════════════
+//  SENTENCES
+// ═══════════════════════════════════════════════════════════
+const SENTENCES = {
+  fr: [
+    "Le renard brun agile saute par-dessus le chien paresseux.",
+    "La programmation est l'art de résoudre des problèmes complexes.",
+    "Chaque jour est une nouvelle opportunité d'apprendre quelque chose.",
+    "Pratiquer régulièrement améliore la vitesse de frappe.",
+    "Les doigts glissent rapidement sur le clavier sans effort.",
+    "La précision est plus importante que la vitesse au début.",
+    "Un bon typiste ne regarde jamais le clavier.",
+    "Maîtriser la dactylographie demande de la persévérance.",
+    "Le silence du bureau favorise la concentration.",
+    "Chaque erreur est une leçon pour progresser davantage.",
+    "Le clavier suisse possède des caractères spéciaux utiles.",
+    "Taper vite et bien est une compétence précieuse.",
+  ],
+  en: [
+    "The quick brown fox jumps over the lazy dog.",
+    "Practice makes perfect when learning to type.",
+    "A good typist never looks at the keyboard.",
+    "Speed and accuracy both improve with daily practice.",
+    "Focus on accuracy first and speed will follow naturally.",
+    "Touch typing is a valuable skill in the digital age.",
+    "Consistency is the key to improving your typing speed.",
+    "The fingers glide effortlessly across the keys.",
+    "Programming is the art of solving complex problems.",
+    "Every day is a new opportunity to learn something new.",
+    "Blind typing requires focus and muscle memory.",
+    "Regular short sessions beat infrequent long ones.",
+  ],
+};
+
+const HOF_KEY = "blindtype_hof";
+
+// ═══════════════════════════════════════════════════════════
 //  SPOKEN NAMES FOR SYMBOLS
 // ═══════════════════════════════════════════════════════════
 const SPOKEN_FR = {
@@ -534,10 +712,18 @@ function charSpoken(ch) {
 // ═══════════════════════════════════════════════════════════
 let layout         = LAYOUTS[CONFIG.defaultLayout];
 let audioOn        = CONFIG.audioOn;
-let audioMode      = "key";   // "key" | "word"
+let audioMode      = "key";     // "key" | "word"
 let blindMode      = false;
 let numpadVisible  = false;
 let numpadDetected = false;
+let mode           = "free";    // "free" | "exercise"
+let exSentMode     = "see";     // "see" | "hear" | "both"
+let exSentence     = "";
+let exTyped        = [];
+let exErrors       = 0;
+let exStartTime    = null;
+let exTimerID      = null;
+let exCompleted    = false;
 let typed     = [];
 let startTime = null;
 let timerID   = null;
@@ -594,6 +780,15 @@ function speak(ch) {
   const utt = new SpeechSynthesisUtterance(charSpoken(ch));
   utt.rate = CONFIG.speechRate;
   utt.lang = layout.lang;
+  if (voice) utt.voice = voice;
+  speechSynthesis.speak(utt);
+}
+
+function speakSentence(text) {
+  speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate  = CONFIG.speechRate * 0.85;
+  utt.lang  = layout.lang;
   if (voice) utt.voice = voice;
   speechSynthesis.speak(utt);
 }
@@ -685,6 +880,8 @@ document.addEventListener("keydown", e => {
   held.add(e.code);
   setActive(e.code, true);
 
+  if (mode === "exercise") { handleExKey(e, isNumpad); return; }
+
   if (e.code === "Backspace") {
     typed.pop();
     renderDisplay();
@@ -746,6 +943,168 @@ function renderStats() {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  EXERCISE
+// ═══════════════════════════════════════════════════════════
+function pickSentence() {
+  const lang = layout.lang.startsWith("fr") ? "fr" : "en";
+  const pool = SENTENCES[lang];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function startExercise() {
+  exSentence  = pickSentence();
+  exTyped     = [];
+  exErrors    = 0;
+  exStartTime = null;
+  exCompleted = false;
+  clearInterval(exTimerID);
+  document.getElementById("display").innerHTML = '<span class="cursor"></span>';
+  renderExercise();
+  renderExStats();
+  if (exSentMode === "hear" || exSentMode === "both") speakSentence(exSentence);
+}
+
+function renderExercise() {
+  const el = document.getElementById("exerciseTarget");
+  if (exSentMode === "hear") {
+    const done = exTyped.length;
+    const tot  = exSentence.length;
+    el.innerHTML = `<span class="ch-todo">${done}/${tot} — typed from memory</span>`;
+    return;
+  }
+  let html = "";
+  for (let i = 0; i < exSentence.length; i++) {
+    const raw = exSentence[i];
+    const ch  = raw === " " ? "&nbsp;" : x(raw);
+    if (i < exTyped.length) {
+      html += `<span class="${exTyped[i] === raw ? "ch-ok" : "ch-err"}">${ch}</span>`;
+    } else if (i === exTyped.length) {
+      html += `<span class="ch-cur">${ch}</span>`;
+    } else {
+      html += `<span class="ch-todo">${ch}</span>`;
+    }
+  }
+  el.innerHTML = html;
+}
+
+function renderExStats() {
+  const elapsed = exStartTime ? (Date.now() - exStartTime) / 60000 : 0;
+  const correct = exTyped.filter((c, i) => c === exSentence[i]).length;
+  const wpm = elapsed > 0.005 ? Math.round((correct / 5) / elapsed) : 0;
+  const sec = elapsed > 0 ? Math.round(elapsed * 60) : 0;
+  const dur = sec >= 60 ? `${Math.floor(sec/60)}m${sec%60}s` : `${sec}s`;
+  document.getElementById("wpm").textContent      = wpm;
+  document.getElementById("keyCount").textContent = exTyped.length;
+  document.getElementById("duration").textContent  = exStartTime ? dur : "0s";
+  document.getElementById("errCount").textContent  = exErrors;
+}
+
+function resolveChar(e, isNumpad) {
+  const lyr = isNumpad ? NUMPAD_KEYS[e.code] : layout.keys[e.code];
+  if (!lyr) return null;
+  let ch = isNumpad ? (lyr[0] ?? null) :
+           mods.altgr ? (lyr[2] ?? lyr[0]) :
+           mods.shift  ? (lyr[1] ?? lyr[0]) :
+                          lyr[0];
+  if (!isNumpad && mods.caps && !mods.shift) {
+    if (ch >= "a" && ch <= "z") ch = ch.toUpperCase();
+    else if (ch >= "A" && ch <= "Z") ch = ch.toLowerCase();
+  }
+  return ch || null;
+}
+
+function handleExKey(e, isNumpad) {
+  if (exCompleted) return;
+
+  if (e.code === "Backspace") {
+    if (exTyped.length > 0) { exTyped.pop(); exErrors++; }
+    renderExercise();
+    renderExStats();
+    return;
+  }
+
+  const ch = resolveChar(e, isNumpad);
+  if (!ch) return;
+
+  if (!exStartTime) {
+    exStartTime = Date.now();
+    exTimerID   = setInterval(renderExStats, 1000);
+  }
+
+  if (ch !== exSentence[exTyped.length]) exErrors++;
+  exTyped.push(ch);
+  speak(ch);
+  renderExercise();
+  renderExStats();
+
+  if (exTyped.length >= exSentence.length) {
+    clearInterval(exTimerID);
+    exCompleted = true;
+    setTimeout(showCompletion, 350);
+  }
+}
+
+function getExResults() {
+  const elapsed  = exStartTime ? (Date.now() - exStartTime) / 60000 : 0;
+  const correct  = exTyped.filter((c, i) => c === exSentence[i]).length;
+  const wpm      = elapsed > 0.005 ? Math.round((correct / 5) / elapsed) : 0;
+  const accuracy = Math.round((correct / exSentence.length) * 100);
+  const sec      = elapsed > 0 ? Math.round(elapsed * 60) : 0;
+  const dur      = sec >= 60 ? `${Math.floor(sec/60)}m${sec%60}s` : `${sec}s`;
+  return { wpm, accuracy, errors: exErrors, dur };
+}
+
+function showCompletion() {
+  const r = getExResults();
+  document.getElementById("modalStats").innerHTML = `
+    <div class="stat"><div class="val">${r.wpm}</div><div class="lbl">WPM</div></div>
+    <div class="stat"><div class="val">${r.accuracy}%</div><div class="lbl">Accuracy</div></div>
+    <div class="stat"><div class="val">${r.errors}</div><div class="lbl">Errors</div></div>
+    <div class="stat"><div class="val">${r.dur}</div><div class="lbl">Time</div></div>
+  `;
+  document.getElementById("playerName").value = "";
+  document.getElementById("modalOverlay").hidden = false;
+  setTimeout(() => document.getElementById("playerName").focus(), 50);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  HALL OF FAME
+// ═══════════════════════════════════════════════════════════
+function hofLoad() {
+  try { return JSON.parse(localStorage.getItem(HOF_KEY)) || []; }
+  catch { return []; }
+}
+
+function hofAdd(entry) {
+  const list = hofLoad();
+  list.push(entry);
+  list.sort((a, b) => b.wpm - a.wpm);
+  const top = list.slice(0, 10);
+  localStorage.setItem(HOF_KEY, JSON.stringify(top));
+  renderHof(top);
+}
+
+function renderHof(entries) {
+  entries = entries ?? hofLoad();
+  const panel = document.getElementById("hofPanel");
+  if (!entries.length) { panel.hidden = true; return; }
+  panel.hidden = false;
+  const medals = ["🥇","🥈","🥉"];
+  document.getElementById("hofTable").innerHTML = `
+    <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Errors</th><th>Date</th></tr>
+    ${entries.map((e, i) => `
+      <tr class="${i < 3 ? "hof-rank-"+(i+1) : ""}">
+        <td class="rank">${medals[i] ?? i+1}</td>
+        <td class="name">${x(e.name)}</td>
+        <td class="wpm">${e.wpm}</td>
+        <td>${e.accuracy}%</td>
+        <td>${e.errors}</td>
+        <td>${e.date}</td>
+      </tr>`).join("")}
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════
 //  CONTROLS
 // ═══════════════════════════════════════════════════════════
 const layoutSel = document.getElementById("layoutSel");
@@ -793,6 +1152,58 @@ document.getElementById("btnNumpad").addEventListener("click", function () {
   this.blur();
 });
 
+// Exercise mode toggle
+document.getElementById("btnMode").addEventListener("click", function () {
+  mode = mode === "free" ? "exercise" : "free";
+  const isEx = mode === "exercise";
+  this.textContent = isEx ? "✕ Exercise" : "Exercise";
+  this.classList.toggle("on", isEx);
+  document.getElementById("exercisePanel").hidden = !isEx;
+  document.getElementById("statErrors").hidden    = !isEx;
+  document.getElementById("display").hidden       = isEx;
+  if (isEx) startExercise();
+  else { clearInterval(exTimerID); reset(); }
+  this.blur();
+});
+
+// Sentence mode (See / Hear / Both)
+["btnExSee","btnExHear","btnExBoth"].forEach(id => {
+  document.getElementById(id).addEventListener("click", function () {
+    exSentMode = { btnExSee:"see", btnExHear:"hear", btnExBoth:"both" }[id];
+    document.getElementById("btnExSee").classList.toggle("on",  exSentMode === "see");
+    document.getElementById("btnExHear").classList.toggle("on", exSentMode === "hear");
+    document.getElementById("btnExBoth").classList.toggle("on", exSentMode === "both");
+    startExercise();
+    this.blur();
+  });
+});
+
+document.getElementById("btnNewSentence").addEventListener("click", function () {
+  startExercise(); this.blur();
+});
+
+document.getElementById("btnRepeat").addEventListener("click", function () {
+  speakSentence(exSentence); this.blur();
+});
+
+// Modal: name entry + auto-save on Enter key or Next button
+document.getElementById("playerName").addEventListener("keydown", e => {
+  if (e.key === "Enter") saveAndNext();
+});
+
+document.getElementById("btnNextEx").addEventListener("click", function () {
+  saveAndNext(); this.blur();
+});
+
+function saveAndNext() {
+  const name = document.getElementById("playerName").value.trim() || "Anonymous";
+  const r    = getExResults();
+  hofAdd({ name, wpm: r.wpm, accuracy: r.accuracy, errors: r.errors,
+            date: new Date().toLocaleDateString() });
+  document.getElementById("modalOverlay").hidden = true;
+  startExercise();
+}
+
 function reset() {
   typed = []; startTime = null;
   clearInterval(timerID);
@@ -808,6 +1219,7 @@ document.title = `BlindType — ${CONFIG.instance}`;
 renderKeyboard();
 renderNumpad();
 renderDisplay();
+renderHof();
 </script>
 </body>
 </html>
