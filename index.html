@@ -426,7 +426,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.05",
+  version:       "v0.90.06",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1036,6 +1036,7 @@ function startExercise() {
   exCompleted = false;
   clearInterval(exTimerID);
   document.getElementById("display").innerHTML = '<span class="cursor"></span>';
+  autoSkipSpaces();
   renderExercise();
   renderExStats();
   if (exSentMode === "hear" || exSentMode === "both") speakSentence(exSentence);
@@ -1112,11 +1113,27 @@ function resolveChar(e, isNumpad) {
   return ch || null;
 }
 
+function autoSkipSpaces() {
+  while (mode === "accountant"
+      && exTyped.length < exSentence.length
+      && exSentence[exTyped.length] === " ") {
+    exTyped.push(" ");
+  }
+}
+
 function handleExKey(e, isNumpad) {
   if (exCompleted) return;
 
   if (e.code === "Backspace") {
-    if (exTyped.length > 0) { exTyped.pop(); exErrors++; }
+    if (exTyped.length > 0) {
+      exTyped.pop();
+      exErrors++;
+      // Also remove any auto-inserted trailing spaces
+      while (mode === "accountant" && exTyped.length > 0
+          && exSentence[exTyped.length - 1] === " ") {
+        exTyped.pop();
+      }
+    }
     renderExercise();
     renderExStats();
     return;
@@ -1125,6 +1142,9 @@ function handleExKey(e, isNumpad) {
   const ch = resolveChar(e, isNumpad);
   if (!ch) return;
 
+  // In accountant mode, skip spaces in the sentence automatically
+  if (mode === "accountant" && ch === " ") return;
+
   if (!exStartTime) {
     exStartTime = Date.now();
     exTimerID   = setInterval(renderExStats, 1000);
@@ -1132,6 +1152,7 @@ function handleExKey(e, isNumpad) {
 
   if (ch !== exSentence[exTyped.length]) exErrors++;
   exTyped.push(ch);
+  autoSkipSpaces();
   speak(ch);
   renderExercise();
   renderExStats();
