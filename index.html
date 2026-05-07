@@ -473,7 +473,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.06",
+  version:       "v0.91.07",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1284,7 +1284,7 @@ function renderHof(m, entries) {
       <th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th>
       <th title="Wrong chars at end">Remaining</th>
       <th title="Backspaces used">Corrections</th>
-      <th>Date</th>
+      <th>Pack</th><th>Date</th>
     </tr>
     ${entries.map((e, i) => `
       <tr class="${i < 3 ? "hof-rank-"+(i+1) : ""}">
@@ -1294,6 +1294,7 @@ function renderHof(m, entries) {
         <td>${e.accuracy}%</td>
         <td>${e.remaining ?? 0}</td>
         <td>${e.corrected ?? 0}</td>
+        <td class="muted">${x(e.pack ?? "")}</td>
         <td>${e.date}</td>
       </tr>`).join("")}
   `;
@@ -1438,15 +1439,17 @@ async function saveAndNext() {
   const date = now.toLocaleDateString() + ' '
              + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const hofMode = mode === "accountant" ? "accountant" : "sentence";
+  const pack    = SENTENCE_PACKS[sentPackKey];
+  const packTag = pack ? `${pack.code ?? sentPackKey} v${pack.version ?? 1}` : sentPackKey;
   const entries = await hofPost(
     { name, wpm: r.wpm, accuracy: r.accuracy,
-      remaining: r.remaining, corrected: r.corrected, date },
+      remaining: r.remaining, corrected: r.corrected, date, pack: packTag },
     hofMode
   );
   renderHof(hofMode, entries);
   logEvent('exercise_complete', {
     wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
-    corrected: r.corrected, dur: r.dur, sentmode: exSentMode,
+    corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag,
   });
   document.getElementById("modalOverlay").hidden = true;
   startExercise();

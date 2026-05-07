@@ -10,9 +10,11 @@ const SENTENCE_PACKS = {
 
   // ── Writer: English ─────────────────────────────────────
   "en": {
-    label: "English — Practice",
-    lang:  "en-US",
-    mode:  "sentence",
+    label:   "English — Practice",
+    code:    "en",
+    version: 1,
+    lang:    "en-US",
+    mode:    "sentence",
     sentences: [
       "The quick brown fox jumps over the lazy dog.",
       "Practice makes perfect when learning to type.",
@@ -31,9 +33,11 @@ const SENTENCE_PACKS = {
 
   // ── Writer: English proverbs ────────────────────────────
   "en-prov": {
-    label: "English — Proverbs",
-    lang:  "en-US",
-    mode:  "sentence",
+    label:   "English — Proverbs",
+    code:    "en-prov",
+    version: 1,
+    lang:    "en-US",
+    mode:    "sentence",
     sentences: [
       "The early bird catches the worm.",
       "Actions speak louder than words.",
@@ -55,9 +59,11 @@ const SENTENCE_PACKS = {
 
   // ── Writer: French ──────────────────────────────────────
   "fr": {
-    label: "Français — Pratique",
-    lang:  "fr-FR",
-    mode:  "sentence",
+    label:   "Français — Pratique",
+    code:    "fr",
+    version: 1,
+    lang:    "fr-FR",
+    mode:    "sentence",
     sentences: [
       "Pratiquer régulièrement améliore la vitesse de frappe.",
       "Les doigts glissent rapidement sur le clavier sans effort.",
@@ -73,9 +79,11 @@ const SENTENCE_PACKS = {
 
   // ── Writer: French expressions ──────────────────────────
   "fr-expr": {
-    label: "Français — Expressions",
-    lang:  "fr-FR",
-    mode:  "sentence",
+    label:   "Français — Expressions",
+    code:    "fr-expr",
+    version: 1,
+    lang:    "fr-FR",
+    mode:    "sentence",
     sentences: [
       "Qui vole un œuf vole un bœuf.",
       "L'habit ne fait pas le moine.",
@@ -97,9 +105,11 @@ const SENTENCE_PACKS = {
 
   // ── Accountant: numpad exercises ────────────────────────
   "numpad": {
-    label: "Numpad — Basic",
-    lang:  "en-US",
-    mode:  "accountant",
+    label:   "Numpad — Basic",
+    code:    "numpad",
+    version: 1,
+    lang:    "en-US",
+    mode:    "accountant",
     sentences: [
       "123 + 456 + 789",
       "1234.56 + 7890.12",

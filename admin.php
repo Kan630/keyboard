@@ -117,7 +117,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Hall of Fame — Writer (all <?= count($hof_s) ?> entries)</h2>
 <?php if ($hof_s): ?>
 <table>
-  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Date</th><th>Saved</th></tr>
+  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
   <?php foreach ($hof_s as $i => $e): ?>
   <tr>
     <td class="muted"><?= $i+1 ?></td>
@@ -126,6 +126,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
     <td><?= h($e['accuracy']) ?>%</td>
     <td class="<?= ($e['remaining']??0) > 0 ? 'err' : 'ok' ?>"><?= $e['remaining']??0 ?></td>
     <td><?= $e['corrected']??0 ?></td>
+    <td class="muted"><?= h($e['pack']??'') ?></td>
     <td><?= h($e['date']) ?></td>
     <td class="muted"><?= h($e['ts']??'') ?></td>
   </tr>
@@ -137,7 +138,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Hall of Fame — Accountant (all <?= count($hof_a) ?> entries)</h2>
 <?php if ($hof_a): ?>
 <table>
-  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Date</th><th>Saved</th></tr>
+  <tr><th>#</th><th>Name</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Pack</th><th>Date</th><th>Saved</th></tr>
   <?php foreach ($hof_a as $i => $e): ?>
   <tr>
     <td class="muted"><?= $i+1 ?></td>
@@ -146,6 +147,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
     <td><?= h($e['accuracy']) ?>%</td>
     <td class="<?= ($e['remaining']??0) > 0 ? 'err' : 'ok' ?>"><?= $e['remaining']??0 ?></td>
     <td><?= $e['corrected']??0 ?></td>
+    <td class="muted"><?= h($e['pack']??'') ?></td>
     <td><?= h($e['date']) ?></td>
     <td class="muted"><?= h($e['ts']??'') ?></td>
   </tr>
@@ -157,7 +159,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
 <h2>Event log — last <?= min(count($events),500) ?> of <?= count($events) ?></h2>
 <?php $shown = array_slice($events, 0, 500); ?>
 <table>
-  <tr><th>Time</th><th>Event</th><th>IP</th><th>Layout</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Duration</th><th>Mode</th></tr>
+  <tr><th>Time</th><th>Event</th><th>IP</th><th>Layout</th><th>WPM</th><th>Accuracy</th><th>Remaining</th><th>Corrections</th><th>Duration</th><th>Mode</th><th>Pack</th></tr>
   <?php foreach ($shown as $e): ?>
   <tr class="<?= ($e['event']??'') === 'visit' ? 'ev-visit' : '' ?>">
     <td class="muted"><?= h($e['ts']??'') ?></td>
@@ -170,6 +172,7 @@ $total_vi = count(array_filter($events, function($e) { return ($e['event']??'') 
     <td><?= h($e['corrected']??'') ?></td>
     <td><?= h($e['dur']??'') ?></td>
     <td><?= h($e['sentmode']??'') ?></td>
+    <td class="muted"><?= h($e['pack']??'') ?></td>
   </tr>
   <?php endforeach; ?>
 </table>

@@ -44,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'accuracy'  => (int)($e['accuracy']  ?? 0),
     'remaining' => (int)($e['remaining'] ?? 0),
     'corrected' => (int)($e['corrected'] ?? 0),
+    'pack'      => substr(strip_tags($e['pack']      ?? ''), 0, 32),
     'date'      => substr($e['date']     ?? '', 0, 32),
     'ts'        => date('c'),
   ];
