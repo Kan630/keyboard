@@ -173,6 +173,31 @@
 
     .practice-footer { display: flex; justify-content: flex-end; }
 
+    /* ── Mode bar ── */
+    .mode-bar {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .mode-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 14px 32px;
+      min-width: 155px;
+      border-radius: 12px;
+      transition: background .12s, border-color .12s, transform .1s;
+    }
+    .mode-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+    .mode-card.on    { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+
+    .mode-icon { font-size: 1.6rem; line-height: 1; }
+    .mode-name { font-size: 0.88rem; font-weight: 700; }
+    .mode-desc { font-size: 0.68rem; color: var(--text-muted); }
+    .mode-card.on .mode-desc { color: rgba(0,0,0,.55); }
+
     /* ── Exercise mode ── */
     .exercise-panel {
       width: 100%;
@@ -315,6 +340,19 @@
   <p class="tagline">Learn to type without looking — audio guided</p>
 </header>
 
+<div class="mode-bar">
+  <button class="mode-card" id="btnModeSentence">
+    <span class="mode-icon">📝</span>
+    <span class="mode-name">Sentence</span>
+    <span class="mode-desc">Type displayed text</span>
+  </button>
+  <button class="mode-card" id="btnModeAccount">
+    <span class="mode-icon">🔢</span>
+    <span class="mode-name">Accountant</span>
+    <span class="mode-desc">Numpad figures &amp; operators</span>
+  </button>
+</div>
+
 <div class="controls">
   <div class="ctrl-group">
     <label for="layoutSel">Layout</label>
@@ -328,7 +366,6 @@
   <button id="btnAudioMode">Per key</button>
   <button id="btnBlind">👁 Show keyboard</button>
   <button id="btnNumpad">⌨ Numpad</button>
-  <button id="btnMode">Exercise</button>
 </div>
 
 <div class="kb-wrap" id="kbWrap">
@@ -389,7 +426,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.04",
+  version:       "v0.90.05",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -674,6 +711,29 @@ const SENTENCES = {
   ],
 };
 
+const ACCOUNTANT_EXERCISES = [
+  "123 + 456 + 789",
+  "1234.56 + 7890.12",
+  "10000 - 3456.78",
+  "47 * 23",
+  "9876 / 4",
+  "1.5 + 2.5 + 3.5 + 4.5",
+  "100 + 200 + 300 + 400",
+  "12345 + 67890",
+  "999 * 111",
+  "1000 / 8",
+  "3.14 * 2",
+  "25 * 4 + 100",
+  "5000 - 1234.56 - 789.01",
+  "98765 / 5",
+  "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9",
+  "111 + 222 + 333 + 444",
+  "9999 - 1111 - 2222",
+  "12.5 * 8",
+  "750 / 3 + 50",
+  "4567.89 + 1234.56",
+];
+
 const HOF_KEY = "blindtype_hof";
 
 // ═══════════════════════════════════════════════════════════
@@ -729,7 +789,7 @@ let audioMode      = "key";     // "key" | "word"
 let blindMode      = false;
 let numpadVisible  = false;
 let numpadDetected = false;
-let mode           = "free";    // "free" | "exercise"
+let mode           = "free";    // "free" | "sentence" | "accountant"
 let exSentMode     = "see";     // "see" | "hear" | "both"
 let exSentence     = "";
 let exTyped        = [];
@@ -895,7 +955,7 @@ document.addEventListener("keydown", e => {
   held.add(e.code);
   setActive(e.code, true);
 
-  if (mode === "exercise") { handleExKey(e, isNumpad); return; }
+  if (mode !== "free") { handleExKey(e, isNumpad); return; }
 
   if (e.code === "Backspace") {
     typed.pop();
@@ -961,9 +1021,11 @@ function renderStats() {
 //  EXERCISE
 // ═══════════════════════════════════════════════════════════
 function pickSentence() {
+  if (mode === "accountant") {
+    return ACCOUNTANT_EXERCISES[Math.floor(Math.random() * ACCOUNTANT_EXERCISES.length)];
+  }
   const lang = layout.lang.startsWith("fr") ? "fr" : "en";
-  const pool = SENTENCES[lang];
-  return pool[Math.floor(Math.random() * pool.length)];
+  return SENTENCES[lang][Math.floor(Math.random() * SENTENCES[lang].length)];
 }
 
 function startExercise() {
@@ -1190,18 +1252,36 @@ document.getElementById("btnNumpad").addEventListener("click", function () {
   this.blur();
 });
 
-// Exercise mode toggle
-document.getElementById("btnMode").addEventListener("click", function () {
-  mode = mode === "free" ? "exercise" : "free";
-  const isEx = mode === "exercise";
-  this.textContent = isEx ? "✕ Exercise" : "Exercise";
-  this.classList.toggle("on", isEx);
+// Mode cards
+function activateMode(newMode) {
+  const wasEx = mode !== "free";
+  mode = (mode === newMode) ? "free" : newMode;   // toggle off if same
+  const isEx = mode !== "free";
+
+  document.getElementById("btnModeSentence").classList.toggle("on", mode === "sentence");
+  document.getElementById("btnModeAccount").classList.toggle("on",  mode === "accountant");
   document.getElementById("exercisePanel").hidden = !isEx;
   document.getElementById("statErrors").hidden    = !isEx;
   document.getElementById("display").hidden       = isEx;
-  if (isEx) startExercise();
-  else { clearInterval(exTimerID); reset(); }
-  this.blur();
+
+  if (isEx) {
+    if (mode === "accountant") {
+      numpadVisible = true;
+      document.getElementById("numpad").hidden = false;
+      document.getElementById("btnNumpad").classList.add("on");
+    }
+    startExercise();
+  } else {
+    clearInterval(exTimerID);
+    reset();
+  }
+}
+
+document.getElementById("btnModeSentence").addEventListener("click", function () {
+  activateMode("sentence"); this.blur();
+});
+document.getElementById("btnModeAccount").addEventListener("click", function () {
+  activateMode("accountant"); this.blur();
 });
 
 // Sentence mode (See / Hear / Both)
