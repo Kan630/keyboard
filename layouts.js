@@ -70,8 +70,8 @@ const LAYOUTS = {
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
     [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"]],
-    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Backslash"],["Enter","w2","↵"]],
-    [["ShiftLeft","w25","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["CapsLock","w175","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Backslash"],["Enter","w2","↵"]],
+    [["ShiftLeft","w12","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
     [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
   ],
 },
@@ -136,8 +136,8 @@ const LAYOUTS = {
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
     [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"],["Backslash"]],
-    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
-    [["ShiftLeft","w2","⇧"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["CapsLock","w175","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
+    [["ShiftLeft","w225","⇧"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
     [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
   ],
 },
@@ -203,8 +203,8 @@ const LAYOUTS = {
   rows: [
     [["Backquote"],["Digit1"],["Digit2"],["Digit3"],["Digit4"],["Digit5"],["Digit6"],["Digit7"],["Digit8"],["Digit9"],["Digit0"],["Minus"],["Equal"],["Backspace","w2","⌫"]],
     [["Tab","w15","⇥"],["KeyQ"],["KeyW"],["KeyE"],["KeyR"],["KeyT"],["KeyY"],["KeyU"],["KeyI"],["KeyO"],["KeyP"],["BracketLeft"],["BracketRight"],["Backslash"]],
-    [["CapsLock","w15","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
-    [["ShiftLeft","w25","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
+    [["CapsLock","w175","⇪"],["KeyA"],["KeyS"],["KeyD"],["KeyF"],["KeyG"],["KeyH"],["KeyJ"],["KeyK"],["KeyL"],["Semicolon"],["Quote"],["Enter","w2","↵"]],
+    [["ShiftLeft","w12","⇧"],["IntlBackslash"],["KeyZ"],["KeyX"],["KeyC"],["KeyV"],["KeyB"],["KeyN"],["KeyM"],["Comma"],["Period"],["Slash"],["ShiftRight","w25","⇧"]],
     [["ControlLeft","w15","Ctrl"],["MetaLeft","","⌘"],["AltLeft","","Alt"],["Space","w65",""],["AltRight","","AltGr"],["ContextMenu","","☰"],["ControlRight","w15","Ctrl"]],
   ],
 },
