@@ -363,10 +363,11 @@
     .theme-bar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
     }
-    .theme-bar label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+    .theme-bar label { font-size: 0.85rem; color: var(--text-muted); white-space: nowrap; }
+    #themeSel { font-size: 0.95rem; padding: 8px 14px; }
   </style>
 </head>
 <body>
@@ -477,7 +478,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.13",
+  version:       "v0.91.14",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1166,7 +1167,7 @@ function updateThemeSel() {
     .forEach(([key, pack]) => {
       const o = document.createElement("option");
       o.value = key;
-      o.textContent = pack.label;
+      o.textContent = (pack.flag ? pack.flag + "  " : "") + pack.label;
       o.selected = (key === sentPackKey);
       sel.appendChild(o);
     });

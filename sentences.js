@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 //  SENTENCE PACKS  —  edit or add packs freely here
 //
-//  Each pack: { label, lang, mode, sentences[] }
+//  Each pack: { label, code, version, flag, lang, mode, sentences[] }
 //    mode: "sentence"   → shown in Writer mode
 //          "accountant" → shown in Accountant mode
 // ═══════════════════════════════════════════════════════════
@@ -12,7 +12,8 @@ const SENTENCE_PACKS = {
   "en": {
     label:   "English — Practice",
     code:    "en",
-    version: 1,
+    version: 2,
+    flag:    "🇬🇧",
     lang:    "en-US",
     mode:    "sentence",
     sentences: [
@@ -28,6 +29,12 @@ const SENTENCE_PACKS = {
       "Every day is a new opportunity to learn something new.",
       "Blind typing requires focus and muscle memory.",
       "Regular short sessions beat infrequent long ones.",
+      "The home row is the foundation of touch typing technique.",
+      "Posture matters as much as technique when typing for hours.",
+      "Muscle memory develops through consistent and deliberate practice.",
+      "Ten fingers working together create a symphony on the keyboard.",
+      "A skilled typist thinks in words, not individual letters.",
+      "Keeping your eyes on the screen is a mark of mastery.",
     ],
   },
 
@@ -35,7 +42,8 @@ const SENTENCE_PACKS = {
   "en-prov": {
     label:   "English — Proverbs",
     code:    "en-prov",
-    version: 1,
+    version: 2,
+    flag:    "🇬🇧",
     lang:    "en-US",
     mode:    "sentence",
     sentences: [
@@ -54,6 +62,16 @@ const SENTENCE_PACKS = {
       "The grass is always greener on the other side.",
       "Time waits for no one.",
       "You reap what you sow.",
+      "A picture is worth a thousand words.",
+      "Honesty is the best policy.",
+      "Strike while the iron is hot.",
+      "When in Rome, do as the Romans do.",
+      "A rolling stone gathers no moss.",
+      "Birds of a feather flock together.",
+      "Don't count your chickens before they hatch.",
+      "The squeaky wheel gets the grease.",
+      "Fortune favours the bold.",
+      "Knowledge is power.",
     ],
   },
 
@@ -61,7 +79,8 @@ const SENTENCE_PACKS = {
   "fr": {
     label:   "Français — Pratique",
     code:    "fr",
-    version: 1,
+    version: 2,
+    flag:    "🇫🇷",
     lang:    "fr-FR",
     mode:    "sentence",
     sentences: [
@@ -74,6 +93,9 @@ const SENTENCE_PACKS = {
       "Chaque erreur est une leçon pour progresser davantage.",
       "Le clavier suisse possède des caractères spéciaux utiles.",
       "Taper vite et bien est une compétence précieuse.",
+      "La mémoire musculaire se développe par la répétition.",
+      "Les dix doigts travaillent ensemble en harmonie.",
+      "La pratique quotidienne mène à la maîtrise complète.",
     ],
   },
 
@@ -81,7 +103,8 @@ const SENTENCE_PACKS = {
   "fr-expr": {
     label:   "Français — Expressions",
     code:    "fr-expr",
-    version: 1,
+    version: 2,
+    flag:    "🇫🇷",
     lang:    "fr-FR",
     mode:    "sentence",
     sentences: [
@@ -100,6 +123,158 @@ const SENTENCE_PACKS = {
       "Il faut battre le fer pendant qu'il est chaud.",
       "On n'apprend pas à un vieux singe à faire la grimace.",
       "Il ne faut pas vendre la peau de l'ours avant de l'avoir tué.",
+      "L'appétit vient en mangeant.",
+      "Vouloir c'est pouvoir.",
+      "Mieux vaut prévenir que guérir.",
+      "Il n'y a pas de fumée sans feu.",
+      "Qui ne risque rien n'a rien.",
+      "Les chiens ne font pas des chats.",
+      "À quelque chose malheur est bon.",
+      "Chacun voit midi à sa porte.",
+    ],
+  },
+
+  // ── Writer: German ──────────────────────────────────────
+  "de": {
+    label:   "Deutsch — Übung",
+    code:    "de",
+    version: 1,
+    flag:    "🇩🇪",
+    lang:    "de-DE",
+    mode:    "sentence",
+    sentences: [
+      "Regelmäßiges Üben verbessert die Tippgeschwindigkeit erheblich.",
+      "Ein guter Schreiber schaut nie auf die Tastatur.",
+      "Genauigkeit ist wichtiger als Geschwindigkeit beim Tippen.",
+      "Die Heimreihe ist das Fundament des Zehnfingersystems.",
+      "Konzentration und Ausdauer führen zur Perfektion.",
+      "Tägliches Üben stärkt die Muskelerinnerung der Finger.",
+      "Die Tastatur ist das wichtigste Werkzeug des Programmierers.",
+      "Schnelles Tippen spart Zeit und steigert die Produktivität.",
+      "Mit Geduld und Übung wird man zum Meister.",
+    ],
+  },
+
+  // ── Writer: German expressions ──────────────────────────
+  "de-expr": {
+    label:   "Deutsch — Sprichwörter",
+    code:    "de-expr",
+    version: 1,
+    flag:    "🇩🇪",
+    lang:    "de-DE",
+    mode:    "sentence",
+    sentences: [
+      "Morgenstund hat Gold im Mund.",
+      "Aller Anfang ist schwer.",
+      "Ende gut, alles gut.",
+      "Übung macht den Meister.",
+      "Reden ist Silber, Schweigen ist Gold.",
+      "Der Apfel fällt nicht weit vom Stamm.",
+      "Viele Köche verderben den Brei.",
+      "Lügen haben kurze Beine.",
+      "Jeder ist seines Glückes Schmied.",
+      "In der Kürze liegt die Würze.",
+      "Wer andern eine Grube gräbt, fällt selbst hinein.",
+      "Man soll den Tag nicht vor dem Abend loben.",
+      "Was du heute kannst besorgen, das verschiebe nicht auf morgen.",
+      "Dem Glücklichen schlägt keine Stunde.",
+      "Kleine Ursachen, große Wirkungen.",
+    ],
+  },
+
+  // ── Writer: Spanish ─────────────────────────────────────
+  "es": {
+    label:   "Español — Práctica",
+    code:    "es",
+    version: 1,
+    flag:    "🇪🇸",
+    lang:    "es-ES",
+    mode:    "sentence",
+    sentences: [
+      "La práctica diaria mejora la velocidad de escritura.",
+      "Un buen mecanógrafo nunca mira el teclado.",
+      "La precisión es más importante que la velocidad al principio.",
+      "La memoria muscular se desarrolla con la práctica constante.",
+      "Concentrarse en la postura mejora la comodidad al escribir.",
+      "El teclado es la herramienta principal del programador moderno.",
+      "Escribir con los diez dedos aumenta la velocidad y eficiencia.",
+      "La repetición diaria lleva a la maestría en mecanografía.",
+      "La paciencia y la constancia son clave para aprender a teclear.",
+    ],
+  },
+
+  // ── Writer: Spanish expressions ─────────────────────────
+  "es-expr": {
+    label:   "Español — Refranes",
+    code:    "es-expr",
+    version: 1,
+    flag:    "🇪🇸",
+    lang:    "es-ES",
+    mode:    "sentence",
+    sentences: [
+      "A caballo regalado no le mires el diente.",
+      "No hay mal que por bien no venga.",
+      "Más vale tarde que nunca.",
+      "A quien madruga, Dios le ayuda.",
+      "En casa del herrero, cuchillo de palo.",
+      "No hay rosa sin espinas.",
+      "Más vale pájaro en mano que ciento volando.",
+      "Del dicho al hecho hay mucho trecho.",
+      "Dime con quién andas y te diré quién eres.",
+      "A mal tiempo, buena cara.",
+      "Ojos que no ven, corazón que no siente.",
+      "Camarón que se duerme, se lo lleva la corriente.",
+      "Zapatero, a tus zapatos.",
+      "No por mucho madrugar amanece más temprano.",
+      "Al que le pique que se rasque.",
+    ],
+  },
+
+  // ── Writer: Italian ─────────────────────────────────────
+  "it": {
+    label:   "Italiano — Pratica",
+    code:    "it",
+    version: 1,
+    flag:    "🇮🇹",
+    lang:    "it-IT",
+    mode:    "sentence",
+    sentences: [
+      "La pratica quotidiana migliora notevolmente la velocità di digitazione.",
+      "Un buon dattilografo non guarda mai la tastiera.",
+      "La precisione è più importante della velocità all'inizio.",
+      "La memoria muscolare si sviluppa con la pratica costante.",
+      "La tastiera è lo strumento principale del programmatore moderno.",
+      "Digitare con tutte le dita aumenta velocità ed efficienza.",
+      "La pazienza e la costanza sono fondamentali per imparare a digitare.",
+      "Ogni errore è un'opportunità per migliorare la tecnica.",
+      "La concentrazione è essenziale per una digitazione accurata.",
+    ],
+  },
+
+  // ── Writer: Italian expressions ─────────────────────────
+  "it-expr": {
+    label:   "Italiano — Proverbi",
+    code:    "it-expr",
+    version: 1,
+    flag:    "🇮🇹",
+    lang:    "it-IT",
+    mode:    "sentence",
+    sentences: [
+      "Chi dorme non piglia pesci.",
+      "Il lupo perde il pelo ma non il vizio.",
+      "Tra il dire e il fare c'è di mezzo il mare.",
+      "Meglio tardi che mai.",
+      "Chi va piano va sano e va lontano.",
+      "Il buongiorno si vede dal mattino.",
+      "Non c'è rosa senza spine.",
+      "A caval donato non si guarda in bocca.",
+      "L'unione fa la forza.",
+      "Paese che vai, usanza che trovi.",
+      "La gatta frettolosa fa i gattini ciechi.",
+      "Chi tace acconsente.",
+      "Non tutte le ciambelle riescono col buco.",
+      "Non rimandare a domani quello che puoi fare oggi.",
+      "Ogni medaglia ha il suo rovescio.",
     ],
   },
 
@@ -108,6 +283,7 @@ const SENTENCE_PACKS = {
     label:   "Numpad — Basic",
     code:    "numpad",
     version: 1,
+    flag:    "🔢",
     lang:    "en-US",
     mode:    "accountant",
     sentences: [
