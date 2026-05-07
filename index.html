@@ -471,7 +471,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.20",
+  version:       "v0.91.21",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1542,30 +1542,39 @@ function setPlayerBadge(name) {
   }
 }
 
+let _saveGuard = false;
 async function saveAndNext() {
-  const name = document.getElementById("playerName").value.trim() || "Anonymous";
+  if (_saveGuard) return;
+  _saveGuard = true;
+
+  // Gather all data synchronously before touching the DOM
+  const name    = document.getElementById("playerName").value.trim() || "Anonymous";
   setPlayerBadge(name);
-  const r   = exLastResults;
-  const now = new Date();
-  const date = now.toLocaleDateString() + ' '
-             + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const r       = exLastResults;
+  const now     = new Date();
+  const date    = now.toLocaleDateString() + ' '
+                + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
   const hofMode = mode === "accountant" ? "accountant" : "sentence";
   const pack    = SENTENCE_PACKS[sentPackKey];
   const packTag = pack ? `${pack.code ?? sentPackKey} v${pack.version ?? 1}` : sentPackKey;
   const country = _countryCache ?? '';
+
+  // Dismiss immediately — user gets instant feedback
+  document.getElementById("modalOverlay").hidden = true;
+  startExercise();
+  _saveGuard = false;
+
+  // Network calls in the background — HoF updates when they return
+  logEvent('exercise_complete', {
+    wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
+    corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag, country,
+  });
   const entries = await hofPost(
     { name, wpm: r.wpm, accuracy: r.accuracy,
       remaining: r.remaining, corrected: r.corrected, date, pack: packTag, country },
     hofMode
   );
-  // If post failed, fall back to a fresh GET so the panel never disappears
   renderHof(hofMode, entries.length ? entries : await hofFetch(hofMode));
-  logEvent('exercise_complete', {
-    wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
-    corrected: r.corrected, dur: r.dur, sentmode: exSentMode, pack: packTag, country,
-  });
-  document.getElementById("modalOverlay").hidden = true;
-  startExercise();
 }
 
 function reset() {
