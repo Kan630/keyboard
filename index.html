@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BlindType — Keyboard Trainer</title>
+  <title>KeyBoard Master — Keyboard Trainer</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     [hidden] { display: none !important; }
@@ -343,7 +343,7 @@
 <body>
 
 <header>
-  <h1>BlindType</h1>
+  <h1>KeyBoard Master</h1>
   <p class="tagline">Learn to type without looking — audio guided</p>
 </header>
 
@@ -442,7 +442,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.11",
+  version:       "v0.90.12",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -797,6 +797,30 @@ function charSpoken(ch) {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  DEAD KEY COMPOSITION
+// ═══════════════════════════════════════════════════════════
+const DEAD_COMPOSE = {
+  "^": { a:"â",e:"ê",i:"î",o:"ô",u:"û",A:"Â",E:"Ê",I:"Î",O:"Ô",U:"Û" },
+  "¨": { a:"ä",e:"ë",i:"ï",o:"ö",u:"ü",y:"ÿ",A:"Ä",E:"Ë",I:"Ï",O:"Ö",U:"Ü",Y:"Ÿ" },
+  "`": { a:"à",e:"è",i:"ì",o:"ò",u:"ù",A:"À",E:"È",I:"Ì",O:"Ò",U:"Ù" },
+  "´": { a:"á",e:"é",i:"í",o:"ó",u:"ú",y:"ý",A:"Á",E:"É",I:"Í",O:"Ó",U:"Ú",Y:"Ý" },
+  "~": { a:"ã",n:"ñ",o:"õ",A:"Ã",N:"Ñ",O:"Õ" },
+};
+
+let deadKey = null;
+
+function composeChar(ch) {
+  if (deadKey) {
+    const composed = DEAD_COMPOSE[deadKey]?.[ch];
+    const prefix   = composed ? null : deadKey;
+    deadKey = null;
+    return composed ? [composed] : [prefix, ch].filter(Boolean);
+  }
+  if (ch in DEAD_COMPOSE) { deadKey = ch; return []; }
+  return [ch];
+}
+
+// ═══════════════════════════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════════════════════════
 let layout         = LAYOUTS[CONFIG.defaultLayout];
@@ -1004,13 +1028,15 @@ document.addEventListener("keydown", e => {
 
   if (!ch) return;
 
+  const chars = composeChar(ch);
+  if (!chars.length) return;
+
   if (!startTime) {
     startTime = Date.now();
     timerID = setInterval(renderStats, 1000);
   }
 
-  typed.push(ch);
-  speak(ch);
+  for (const c of chars) { typed.push(c); speak(c); }
   renderDisplay();
   renderStats();
 });
@@ -1163,20 +1189,25 @@ function handleExKey(e, isNumpad) {
     return;
   }
 
-  const ch = resolveChar(e, isNumpad);
-  if (!ch) return;
+  const raw = resolveChar(e, isNumpad);
+  if (!raw) return;
 
   // In accountant mode, skip spaces in the sentence automatically
-  if (mode === "accountant" && ch === " ") return;
+  if (mode === "accountant" && raw === " ") return;
+
+  const chars = composeChar(raw);
+  if (!chars.length) return;
 
   if (!exStartTime) {
     exStartTime = Date.now();
     exTimerID   = setInterval(renderExStats, 1000);
   }
 
-  exTyped.push(ch);
-  autoSkipSpaces();
-  speak(ch);
+  for (const ch of chars) {
+    exTyped.push(ch);
+    autoSkipSpaces();
+    speak(ch);
+  }
   renderExercise();
   renderExStats();
 
@@ -1419,7 +1450,7 @@ function logEvent(event, extra = {}) {
 // ═══════════════════════════════════════════════════════════
 document.getElementById("badge").textContent        = CONFIG.instance;
 document.getElementById("versionBadge").textContent = CONFIG.version;
-document.title = `BlindType — ${CONFIG.instance}`;
+document.title = `KeyBoard Master — ${CONFIG.instance}`;
 renderKeyboard();
 renderNumpad();
 renderDisplay();
