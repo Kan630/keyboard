@@ -431,7 +431,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.07",
+  version:       "v0.90.08",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1349,6 +1349,10 @@ document.getElementById("btnRepeat").addEventListener("click", function () {
 // Modal: name entry + auto-save on Enter key or Next button
 document.getElementById("playerName").addEventListener("keydown", e => {
   if (e.key === "Enter") saveAndNext();
+  if (e.key === "Escape") {
+    document.getElementById("modalOverlay").hidden = true;
+    startExercise();
+  }
 });
 
 document.getElementById("btnNextEx").addEventListener("click", function () {
