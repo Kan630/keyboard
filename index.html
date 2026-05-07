@@ -634,6 +634,7 @@ document.addEventListener("keyup", e => {
   if (e.code === "ShiftLeft" || e.code === "ShiftRight") mods.shift = false;
   if (e.code === "AltRight") mods.altgr = false;
   setActive(e.code, false);
+  if (layout.keys[e.code] || e.code === "Backspace") e.preventDefault();
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -676,6 +677,7 @@ document.getElementById("btnAudio").addEventListener("click", function () {
   audioOn = !audioOn;
   this.textContent = audioOn ? "🔊 Audio" : "🔇 Audio";
   this.classList.toggle("on", audioOn);
+  this.blur();
 });
 
 document.getElementById("btnBlind").addEventListener("click", function () {
@@ -683,9 +685,10 @@ document.getElementById("btnBlind").addEventListener("click", function () {
   document.getElementById("kbWrap").classList.toggle("blind", blindMode);
   this.textContent = blindMode ? "🙈 Blind mode" : "👁 Show keyboard";
   this.classList.toggle("on", blindMode);
+  this.blur();
 });
 
-document.getElementById("btnClear").addEventListener("click", reset);
+document.getElementById("btnClear").addEventListener("click", function () { reset(); this.blur(); });
 
 function reset() {
   typed = []; startTime = null;
