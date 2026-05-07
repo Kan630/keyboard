@@ -465,7 +465,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.01",
+  version:       "v0.91.02",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -732,7 +732,7 @@ const NUMPAD_LAYOUT = [
 // ═══════════════════════════════════════════════════════════
 //  SENTENCES
 // ═══════════════════════════════════════════════════════════
-const HOF_KEYS = { sentence: "blindtype_hof_sentence", accountant: "blindtype_hof_account" };
+const HOF_MODE = { sentence: "sentence", accountant: "accountant" };
 
 // ═══════════════════════════════════════════════════════════
 //  SPOKEN NAMES FOR SYMBOLS
@@ -1245,30 +1245,28 @@ function showCompletion() {
 // ═══════════════════════════════════════════════════════════
 //  HALL OF FAME
 // ═══════════════════════════════════════════════════════════
-function hofLoad(m) {
-  try { return JSON.parse(localStorage.getItem(HOF_KEYS[m])) || []; }
-  catch { return []; }
+async function hofFetch(m) {
+  try {
+    const r = await fetch(`hof.php?mode=${m}`);
+    return r.ok ? r.json() : [];
+  } catch { return []; }
 }
 
-function hofAdd(entry, m) {
-  const list = hofLoad(m);
-  list.push(entry);
-  // Sort: fewer remaining errors first, then higher accuracy (penalises corrections), then higher WPM
-  list.sort((a, b) => {
-    const ra = a.remaining ?? 0, rb = b.remaining ?? 0;
-    if (ra !== rb) return ra - rb;
-    if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
-    return b.wpm - a.wpm;
-  });
-  const top = list.slice(0, 10);
-  localStorage.setItem(HOF_KEYS[m], JSON.stringify(top));
-  renderHof(m, top);
+async function hofPost(entry, m) {
+  try {
+    const r = await fetch('hof.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: m, entry }),
+    });
+    const j = await r.json();
+    return j.entries ?? [];
+  } catch { return []; }
 }
 
 function renderHof(m, entries) {
   const panelId = m === "accountant" ? "hofPanelAccount" : "hofPanelSentence";
   const tableId = m === "accountant" ? "hofTableAccount" : "hofTableSentence";
-  entries = entries ?? hofLoad(m);
   const panel = document.getElementById(panelId);
   if (!entries.length) { panel.hidden = true; return; }
   panel.hidden = false;
@@ -1291,6 +1289,10 @@ function renderHof(m, entries) {
         <td>${e.date}</td>
       </tr>`).join("")}
   `;
+}
+
+async function refreshHof(m) {
+  renderHof(m, await hofFetch(m));
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1420,15 +1422,20 @@ function setPlayerBadge(name) {
   }
 }
 
-function saveAndNext() {
+async function saveAndNext() {
   const name = document.getElementById("playerName").value.trim() || "Anonymous";
   setPlayerBadge(name);
-  const r    = exLastResults;                   // reuse frozen results
-  const now  = new Date();
+  const r   = exLastResults;
+  const now = new Date();
   const date = now.toLocaleDateString() + ' '
              + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  hofAdd({ name, wpm: r.wpm, accuracy: r.accuracy,
-           remaining: r.remaining, corrected: r.corrected, date }, mode);
+  const hofMode = mode === "accountant" ? "accountant" : "sentence";
+  const entries = await hofPost(
+    { name, wpm: r.wpm, accuracy: r.accuracy,
+      remaining: r.remaining, corrected: r.corrected, date },
+    hofMode
+  );
+  renderHof(hofMode, entries);
   logEvent('exercise_complete', {
     wpm: r.wpm, accuracy: r.accuracy, remaining: r.remaining,
     corrected: r.corrected, dur: r.dur, sentmode: exSentMode,
@@ -1466,8 +1473,8 @@ setPlayerBadge(localStorage.getItem("kbm_player") || "");
 renderKeyboard();
 renderNumpad();
 renderDisplay();
-renderHof("sentence");
-renderHof("accountant");
+refreshHof("sentence");
+refreshHof("accountant");
 logEvent('visit');
 </script>
 </body>
