@@ -205,9 +205,19 @@
     }
 
     .ch-ok   { color: #3fb950; }
-    .ch-err  { color: #f85149; text-decoration: underline wavy; }
+    .ch-err  { color: #f85149; }
     .ch-cur  { background: var(--accent); color: #0d1117; border-radius: 2px; padding: 0 1px; }
     .ch-todo { color: var(--text-muted); }
+
+    .ex-reference {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-size: 0.95em;
+      opacity: 0.75;
+    }
+    .ch-ref     { color: var(--text-muted); }
+    .ch-ref-err { color: #f85149; font-weight: 700; }
 
     /* ── Completion modal ── */
     .modal-overlay {
@@ -379,7 +389,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.03",
+  version:       "v0.90.04",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -972,24 +982,46 @@ function startExercise() {
 function renderExercise() {
   const el = document.getElementById("exerciseTarget");
   if (exSentMode === "hear") {
-    const done = exTyped.length;
-    const tot  = exSentence.length;
-    el.innerHTML = `<span class="ch-todo">${done}/${tot} — typed from memory</span>`;
+    el.innerHTML = `<span class="ch-todo">${exTyped.length}/${exSentence.length} — typed from memory</span>`;
     return;
   }
-  let html = "";
+
+  let typedHtml = "";
+  let hasErrors = false;
+
   for (let i = 0; i < exSentence.length; i++) {
-    const raw = exSentence[i];
-    const ch  = raw === " " ? "&nbsp;" : x(raw);
+    const target = exSentence[i];
+    const tgt    = target === " " ? "&nbsp;" : x(target);
+
     if (i < exTyped.length) {
-      html += `<span class="${exTyped[i] === raw ? "ch-ok" : "ch-err"}">${ch}</span>`;
+      if (exTyped[i] === target) {
+        typedHtml += `<span class="ch-ok">${tgt}</span>`;
+      } else {
+        hasErrors = true;
+        const typed = exTyped[i] === " " ? "␣" : x(exTyped[i]);
+        typedHtml += `<span class="ch-err">${typed}</span>`;
+      }
     } else if (i === exTyped.length) {
-      html += `<span class="ch-cur">${ch}</span>`;
+      typedHtml += `<span class="ch-cur">${tgt}</span>`;
     } else {
-      html += `<span class="ch-todo">${ch}</span>`;
+      typedHtml += `<span class="ch-todo">${tgt}</span>`;
     }
   }
-  el.innerHTML = html;
+
+  // Reference line: show the target sentence when there are errors
+  let refHtml = "";
+  if (hasErrors) {
+    refHtml = '<div class="ex-reference">';
+    for (let i = 0; i < exSentence.length; i++) {
+      const target = exSentence[i];
+      const tgt    = target === " " ? "&nbsp;" : x(target);
+      const isErr  = i < exTyped.length && exTyped[i] !== target;
+      refHtml += `<span class="${isErr ? "ch-ref-err" : "ch-ref"}">${tgt}</span>`;
+    }
+    refHtml += '</div>';
+  }
+
+  el.innerHTML = typedHtml + refHtml;
 }
 
 function renderExStats() {
