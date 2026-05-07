@@ -59,9 +59,6 @@ const SENTENCE_PACKS = {
     lang:  "fr-FR",
     mode:  "sentence",
     sentences: [
-      "Le renard brun agile saute par-dessus le chien paresseux.",
-      "La programmation est l'art de résoudre des problèmes complexes.",
-      "Chaque jour est une nouvelle opportunité d'apprendre quelque chose.",
       "Pratiquer régulièrement améliore la vitesse de frappe.",
       "Les doigts glissent rapidement sur le clavier sans effort.",
       "La précision est plus importante que la vitesse au début.",
