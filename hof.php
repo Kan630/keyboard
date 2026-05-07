@@ -23,7 +23,10 @@ function flag_emoji($code) {
   $code = strtoupper(trim($code ?? ''));
   if (strlen($code) !== 2 || !ctype_alpha($code)) return '';
   $base = 0x1F1E6 - ord('A');
-  return mb_chr(ord($code[0]) + $base, 'UTF-8') . mb_chr(ord($code[1]) + $base, 'UTF-8');
+  $u = function($cp) {
+    return pack('C4', 0xF0|($cp>>18), 0x80|(($cp>>12)&0x3F), 0x80|(($cp>>6)&0x3F), 0x80|($cp&0x3F));
+  };
+  return $u(ord($code[0]) + $base) . $u(ord($code[1]) + $base);
 }
 
 // ── GET: return top 10 for a mode ───────────────────────────────────────────
