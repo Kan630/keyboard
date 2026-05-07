@@ -44,7 +44,8 @@ function read_json($path) {
 function read_log($path) {
   if (!file_exists($path)) return [];
   $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-  return array_reverse(array_filter(array_map(fn($l) => json_decode($l, true), $lines)));
+  $parsed = array_map(function($l) { return json_decode($l, true); }, $lines);
+  return array_reverse(array_values(array_filter($parsed)));
 }
 
 $hof_s = read_json(__DIR__ . '/data/hof_sentence.json');
@@ -101,8 +102,8 @@ function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES); }
 <p class="meta">Server time: <?= date('Y-m-d H:i:s') ?></p>
 
 <?php
-$total_ex = count(array_filter($events, fn($e) => ($e['event']??'') === 'exercise_complete'));
-$total_vi = count(array_filter($events, fn($e) => ($e['event']??'') === 'visit'));
+$total_ex = count(array_filter($events, function($e) { return ($e['event']??'') === 'exercise_complete'; }));
+$total_vi = count(array_filter($events, function($e) { return ($e['event']??'') === 'visit'; }));
 ?>
 <div class="summary">
   <div class="card"><div class="val"><?= count($events) ?></div><div class="lbl">Total events</div></div>
