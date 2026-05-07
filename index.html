@@ -339,6 +339,14 @@
     #badge        { bottom: 10px; right: 14px; }
     #versionBadge { top: 10px; right: 14px; }
     #playerBadge  { top: 34px; right: 14px; font-size: 0.72rem; color: var(--accent); }
+    /* ── Theme bar ── */
+    .theme-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+    .theme-bar label { font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
   </style>
 </head>
 <body>
@@ -361,6 +369,11 @@
   </button>
 </div>
 
+<div class="theme-bar" id="themeBar" hidden>
+  <label for="themeSel">Theme</label>
+  <select id="themeSel"></select>
+</div>
+
 <div class="controls">
   <div class="ctrl-row">
     <div class="ctrl-group">
@@ -368,7 +381,6 @@
       <select id="layoutSel"></select>
     </div>
     <button id="btnBlind">👁 Show keyboard</button>
-    <button id="btnNumpad">⌨ Numpad</button>
   </div>
   <div class="ctrl-row">
     <div class="ctrl-group">
@@ -438,13 +450,14 @@
 <div class="badge" id="versionBadge"></div>
 <div class="badge" id="playerBadge" hidden></div>
 
+<script src="sentences.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════
 //  CONFIG  — change per server instance
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.15",
+  version:       "v0.91.00",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -698,60 +711,6 @@ const NUMPAD_ROWS = [
 // ═══════════════════════════════════════════════════════════
 //  SENTENCES
 // ═══════════════════════════════════════════════════════════
-const SENTENCES = {
-  fr: [
-    "Le renard brun agile saute par-dessus le chien paresseux.",
-    "La programmation est l'art de résoudre des problèmes complexes.",
-    "Chaque jour est une nouvelle opportunité d'apprendre quelque chose.",
-    "Pratiquer régulièrement améliore la vitesse de frappe.",
-    "Les doigts glissent rapidement sur le clavier sans effort.",
-    "La précision est plus importante que la vitesse au début.",
-    "Un bon typiste ne regarde jamais le clavier.",
-    "Maîtriser la dactylographie demande de la persévérance.",
-    "Le silence du bureau favorise la concentration.",
-    "Chaque erreur est une leçon pour progresser davantage.",
-    "Le clavier suisse possède des caractères spéciaux utiles.",
-    "Taper vite et bien est une compétence précieuse.",
-  ],
-  en: [
-    "The quick brown fox jumps over the lazy dog.",
-    "Practice makes perfect when learning to type.",
-    "A good typist never looks at the keyboard.",
-    "Speed and accuracy both improve with daily practice.",
-    "Focus on accuracy first and speed will follow naturally.",
-    "Touch typing is a valuable skill in the digital age.",
-    "Consistency is the key to improving your typing speed.",
-    "The fingers glide effortlessly across the keys.",
-    "Programming is the art of solving complex problems.",
-    "Every day is a new opportunity to learn something new.",
-    "Blind typing requires focus and muscle memory.",
-    "Regular short sessions beat infrequent long ones.",
-  ],
-};
-
-const ACCOUNTANT_EXERCISES = [
-  "123 + 456 + 789",
-  "1234.56 + 7890.12",
-  "10000 - 3456.78",
-  "47 * 23",
-  "9876 / 4",
-  "1.5 + 2.5 + 3.5 + 4.5",
-  "100 + 200 + 300 + 400",
-  "12345 + 67890",
-  "999 * 111",
-  "1000 / 8",
-  "3.14 * 2",
-  "25 * 4 + 100",
-  "5000 - 1234.56 - 789.01",
-  "98765 / 5",
-  "1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9",
-  "111 + 222 + 333 + 444",
-  "9999 - 1111 - 2222",
-  "12.5 * 8",
-  "750 / 3 + 50",
-  "4567.89 + 1234.56",
-];
-
 const HOF_KEYS = { sentence: "blindtype_hof_sentence", accountant: "blindtype_hof_account" };
 
 // ═══════════════════════════════════════════════════════════
@@ -832,6 +791,7 @@ let blindMode      = false;
 let numpadVisible  = false;
 let numpadDetected = false;
 let mode           = "free";    // "free" | "sentence" | "accountant"
+let sentPackKey    = CONFIG.preferLang === "fr" ? "fr" : "en";
 let exSentMode     = "see";     // "see" | "hear" | "both"
 let exSentence     = "";
 let exTyped        = [];
@@ -997,7 +957,6 @@ document.addEventListener("keydown", e => {
     numpadDetected = true;
     numpadVisible  = true;
     document.getElementById("numpad").hidden = false;
-    document.getElementById("btnNumpad").classList.add("on");
   }
 
   if (layout.keys[e.code] || isNumpad || e.code === "Backspace") e.preventDefault();
@@ -1074,11 +1033,24 @@ function renderStats() {
 //  EXERCISE
 // ═══════════════════════════════════════════════════════════
 function pickSentence() {
-  if (mode === "accountant") {
-    return ACCOUNTANT_EXERCISES[Math.floor(Math.random() * ACCOUNTANT_EXERCISES.length)];
-  }
-  const lang = layout.lang.startsWith("fr") ? "fr" : "en";
-  return SENTENCES[lang][Math.floor(Math.random() * SENTENCES[lang].length)];
+  const list = SENTENCE_PACKS[sentPackKey]?.sentences ?? [];
+  return list[Math.floor(Math.random() * list.length)] ?? "";
+}
+
+function updateThemeSel() {
+  const modeFilter = mode === "accountant" ? "accountant" : "sentence";
+  const sel = document.getElementById("themeSel");
+  sel.innerHTML = "";
+  Object.entries(SENTENCE_PACKS)
+    .filter(([, p]) => p.mode === modeFilter)
+    .forEach(([key, pack]) => {
+      const o = document.createElement("option");
+      o.value = key;
+      o.textContent = pack.label;
+      o.selected = (key === sentPackKey);
+      sel.appendChild(o);
+    });
+  document.getElementById("themeBar").hidden = (mode === "free");
 }
 
 function startExercise() {
@@ -1348,12 +1320,6 @@ document.getElementById("btnBlind").addEventListener("click", function () {
 
 document.getElementById("btnClear").addEventListener("click", function () { reset(); this.blur(); });
 
-document.getElementById("btnNumpad").addEventListener("click", function () {
-  numpadVisible = !numpadVisible;
-  document.getElementById("numpad").hidden = !numpadVisible;
-  this.classList.toggle("on", numpadVisible);
-  this.blur();
-});
 
 // Mode cards
 function activateMode(newMode) {
@@ -1361,17 +1327,23 @@ function activateMode(newMode) {
   mode = (mode === newMode) ? "free" : newMode;   // toggle off if same
   const isEx = mode !== "free";
 
+  // Set default pack when mode changes
+  if (mode === "accountant") sentPackKey = "numpad";
+  else if (mode === "sentence" && sentPackKey === "numpad") {
+    sentPackKey = CONFIG.preferLang === "fr" ? "fr" : "en";
+  }
+
   document.getElementById("btnModeSentence").classList.toggle("on", mode === "sentence");
   document.getElementById("btnModeAccount").classList.toggle("on",  mode === "accountant");
   document.getElementById("exercisePanel").hidden = !isEx;
   document.getElementById("statErrors").hidden    = !isEx;
   document.getElementById("display").hidden       = isEx;
+  updateThemeSel();
 
   if (isEx) {
     if (mode === "accountant") {
       numpadVisible = true;
       document.getElementById("numpad").hidden = false;
-      document.getElementById("btnNumpad").classList.add("on");
     }
     startExercise();
   } else {
@@ -1385,6 +1357,11 @@ document.getElementById("btnModeSentence").addEventListener("click", function ()
 });
 document.getElementById("btnModeAccount").addEventListener("click", function () {
   activateMode("accountant"); this.blur();
+});
+
+document.getElementById("themeSel").addEventListener("change", e => {
+  sentPackKey = e.target.value;
+  if (mode !== "free") startExercise();
 });
 
 // Sentence mode (See / Hear / Both)
