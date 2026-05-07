@@ -379,7 +379,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.90.01",
+  version:       "v0.90.02",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -1204,6 +1204,10 @@ function saveAndNext() {
   const r    = getExResults();
   hofAdd({ name, wpm: r.wpm, accuracy: r.accuracy, errors: r.errors,
             date: new Date().toLocaleDateString() });
+  logEvent('exercise_complete', {
+    wpm: r.wpm, accuracy: r.accuracy, errors: r.errors,
+    dur: r.dur, sentmode: exSentMode,
+  });
   document.getElementById("modalOverlay").hidden = true;
   startExercise();
 }
@@ -1216,6 +1220,18 @@ function reset() {
 }
 
 // ═══════════════════════════════════════════════════════════
+//  LOGGING
+// ═══════════════════════════════════════════════════════════
+function logEvent(event, extra = {}) {
+  fetch('log.php', {
+    method:    'POST',
+    headers:   { 'Content-Type': 'application/json' },
+    body:      JSON.stringify({ event, layout: layout.region, ...extra }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
+// ═══════════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════════
 document.getElementById("badge").textContent        = CONFIG.instance;
@@ -1225,6 +1241,7 @@ renderKeyboard();
 renderNumpad();
 renderDisplay();
 renderHof();
+logEvent('visit');
 </script>
 </body>
 </html>
