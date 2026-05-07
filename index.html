@@ -36,7 +36,9 @@
     }
 
     header { text-align: center; }
-    h1 { font-size: 1.8rem; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; }
+    h1 { font-size: 1.8rem; font-weight: 700; color: var(--accent); letter-spacing: -0.03em;
+         display: flex; align-items: center; justify-content: center; gap: 10px; }
+    h1 img { width: 36px; height: 36px; border-radius: 8px; }
     .tagline { color: var(--text-muted); font-size: 0.82rem; margin-top: 3px; }
 
     /* ── Controls ── */
@@ -368,7 +370,7 @@
 <body>
 
 <header>
-  <h1>Keyboard Master</h1>
+  <h1><img src="img/driot_keyboard_icon.png" alt="">Keyboard Master</h1>
   <p class="tagline">Learn to type without looking — audio guided</p>
 </header>
 
@@ -473,7 +475,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.07",
+  version:       "v0.91.08",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
