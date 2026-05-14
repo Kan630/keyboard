@@ -116,7 +116,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.25",
+  version:       "v0.91.26",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -229,8 +229,9 @@ function speak(ch) {
     }
     return;
   }
+  if (speechSynthesis.pending) return;
   const utt = new SpeechSynthesisUtterance(charSpoken(ch));
-  utt.rate = CONFIG.speechRate;
+  utt.rate = CONFIG.speechRate * 1.6;
   utt.lang = layout.lang;
   if (voice) utt.voice = voice;
   speechSynthesis.speak(utt);
