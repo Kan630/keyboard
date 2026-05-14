@@ -122,6 +122,12 @@ button.on     { background: var(--accent); color: #0d1117; border-color: var(--a
   user-select: none;
 }
 
+.key.home-row {
+  background: #1e2a20;
+  border-color: #3a6b40;
+  border-bottom-color: #0d180f;
+}
+
 .key.active {
   background: var(--key-active-bg);
   border-color: var(--key-active-bdr);

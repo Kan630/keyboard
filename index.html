@@ -116,7 +116,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.23",
+  version:       "v0.91.24",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -253,6 +253,8 @@ function x(s) {
   return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+const HOME_ROW_KEYS = new Set(["KeyA","KeyS","KeyD","KeyF","KeyJ","KeyK","KeyL","Semicolon"]);
+
 function renderKeyboard() {
   const kb = document.getElementById("keyboard");
   kb.innerHTML = "";
@@ -261,7 +263,8 @@ function renderKeyboard() {
     row.className = "kb-row";
     rowDef.forEach(([code, w = "", label]) => {
       const el = document.createElement("div");
-      el.className = "key" + (w ? " " + w : "");
+      const homeClass = HOME_ROW_KEYS.has(code) ? " home-row" : "";
+      el.className = "key" + (w ? " " + w : "") + homeClass;
       el.dataset.code = code;
       if (label !== undefined) {
         el.innerHTML = `<span class="sp">${label}</span>`;
