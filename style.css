@@ -373,11 +373,11 @@ button.on     { background: var(--accent); color: #0d1117; border-color: var(--a
 .hof-table .rank         { color: var(--text-muted); font-size: 1rem; width: 28px; }
 .hof-table .wpm          { color: var(--accent); font-weight: 700; font-size: 1rem; width: 52px; }
 .hof-table .muted        { color: var(--text-muted); }
-.hof-table .name         { font-weight: 600; }
+.hof-table .name         { font-weight: 600; width: 150px; }
 .hof-table .hof-sentence { width: 42%; }
 .hof-table .hof-flag     { width: 36px; font-size: 1.1em; text-align: center; overflow: visible; padding: 6px 2px; }
 .hof-table .corr-cell    { width: 48px; text-align: center; }
-.hof-table .date-cell    { width: 158px; overflow: visible; }
+.hof-table .date-cell    { width: 158px; }
 .hof-rank-1 td { background: rgba(255,215,0,.06); }
 .hof-rank-2 td { background: rgba(192,192,192,.04); }
 .hof-rank-3 td { background: rgba(205,127,50,.04); }
