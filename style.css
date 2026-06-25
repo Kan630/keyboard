@@ -226,12 +226,13 @@ button.on     { background: var(--accent); color: #0d1117; border-color: var(--a
   width: 100%;
   max-width: 740px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--accent);
   border-radius: 12px;
   padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+  box-shadow: 0 0 18px rgba(88,166,255,.08);
 }
 
 .ex-controls {
@@ -246,11 +247,24 @@ button.on     { background: var(--accent); color: #0d1117; border-color: var(--a
 
 .exercise-target {
   font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-  font-size: 1.25rem;
-  line-height: 1.8;
-  min-height: 52px;
+  font-size: 1.4rem;
+  line-height: 1.85;
+  min-height: 58px;
   word-break: break-word;
+  background: rgba(88,166,255,.04);
+  border-radius: 8px;
+  padding: 10px 14px;
 }
+
+.ex-sent-stats {
+  display: flex;
+  gap: 24px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.ex-stat { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.ex-stat-val { font-size: 1rem; font-weight: 700; color: var(--accent); }
+.ex-stat-lbl { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em; }
 
 .ch-ok   { color: #3fb950; }
 .ch-err  { color: #f85149; }
@@ -315,32 +329,68 @@ button.on     { background: var(--accent); color: #0d1117; border-color: var(--a
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
 .hof-panel h2 {
   font-size: 1rem;
   font-weight: 700;
   color: var(--accent);
-  margin-bottom: 12px;
+  margin-bottom: 0;
   letter-spacing: .05em;
+}
+
+.hof-sub {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.hof-sub-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: .04em;
+  padding: 8px 12px 7px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(88,166,255,.04);
 }
 
 .hof-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .hof-table th {
   color: var(--text-muted);
   text-align: left;
-  padding: 4px 10px;
+  padding: 5px 10px;
   border-bottom: 1px solid var(--border);
   font-weight: 500;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }
-.hof-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); }
+.hof-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 0; }
 .hof-table tr:last-child td { border-bottom: none; }
-.hof-table .rank { color: var(--text-muted); font-size: 1rem; }
-.hof-table .name { font-weight: 600; }
-.hof-table .wpm  { color: var(--accent); font-weight: 700; font-size: 1rem; }
-.hof-rank-1 td   { background: rgba(255,215,0,.06); }
-.hof-rank-2 td   { background: rgba(192,192,192,.04); }
-.hof-rank-3 td   { background: rgba(205,127,50,.04); }
+.hof-table .rank         { color: var(--text-muted); font-size: 1rem; width: 28px; }
+.hof-table .wpm          { color: var(--accent); font-weight: 700; font-size: 1rem; width: 52px; }
+.hof-table .muted        { color: var(--text-muted); }
+.hof-table .name         { font-weight: 600; }
+.hof-table .hof-sentence { width: 42%; }
+.hof-table .hof-flag     { width: 28px; font-size: 1.1em; }
+.hof-rank-1 td { background: rgba(255,215,0,.06); }
+.hof-rank-2 td { background: rgba(192,192,192,.04); }
+.hof-rank-3 td { background: rgba(205,127,50,.04); }
+.hof-personal td { background: rgba(99,179,237,.05); }
+/* Sentence group header inside the global table */
+.hof-sent-header td {
+  padding: 8px 10px 3px;
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+  white-space: normal;
+  max-width: none;
+}
+.hof-sent-header:first-child td { border-top: none; }
+.hof-pack { font-style: normal; color: var(--text-muted); font-size: 0.75em; margin-left: 8px; }
 
 /* ── Badges ── */
 .badge {

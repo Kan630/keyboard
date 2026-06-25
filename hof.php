@@ -3,15 +3,6 @@ header('Content-Type: application/json');
 
 $allowed = ['sentence', 'accountant'];
 
-function hof_sort(&$list) {
-  usort($list, function($a, $b) {
-    $ra = $a['remaining'] ?? 0; $rb = $b['remaining'] ?? 0;
-    if ($ra !== $rb) return $ra - $rb;
-    if ($b['accuracy'] !== $a['accuracy']) return $b['accuracy'] - $a['accuracy'];
-    return $b['wpm'] - $a['wpm'];
-  });
-}
-
 function hof_read($mode) {
   $file = __DIR__ . "/data/hof_{$mode}.json";
   if (!file_exists($file)) return [];
@@ -29,17 +20,52 @@ function flag_emoji($code) {
   return $u(ord($code[0]) + $base) . $u(ord($code[1]) + $base);
 }
 
-// ── GET: return top 10 for a mode ───────────────────────────────────────────
+// Per sentence (remaining===0 only): keep top-3 individual runs with player info.
+// Sentences sorted by their best run's WPM descending.
+function hof_aggregate($list) {
+  $by = [];
+  foreach ($list as $e) {
+    if (($e['remaining'] ?? 1) !== 0) continue;
+    $sent = $e['sentence'] ?? '';
+    if ($sent === '') continue;
+    if (!isset($by[$sent])) {
+      $by[$sent] = ['sentence' => $sent, 'pack' => $e['pack'] ?? '', 'runs' => []];
+    }
+    $by[$sent]['runs'][] = [
+      'name'      => $e['name']      ?? '',
+      'wpm'       => (int)($e['wpm'] ?? 0),
+      'corrected' => (int)($e['corrected'] ?? 0),
+      'flag'      => $e['flag']      ?? '',
+      'country'   => $e['country']   ?? '',
+      'date'      => $e['date']      ?? '',
+    ];
+  }
+
+  $result = [];
+  foreach ($by as $data) {
+    usort($data['runs'], function($a, $b) { return $b['wpm'] - $a['wpm']; });
+    $runs = array_slice($data['runs'], 0, 3);
+    $result[] = [
+      'sentence' => $data['sentence'],
+      'pack'     => $data['pack'],
+      'best_wpm' => $runs[0]['wpm'] ?? 0,
+      'runs'     => $runs,
+    ];
+  }
+
+  usort($result, function($a, $b) { return $b['best_wpm'] - $a['best_wpm']; });
+  return array_slice($result, 0, 20);
+}
+
+// ── GET: per-sentence leaderboard ────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
   $mode = $_GET['mode'] ?? '';
   if (!in_array($mode, $allowed, true)) { http_response_code(400); echo '[]'; exit; }
-  $list = hof_read($mode);
-  hof_sort($list);
-  echo json_encode(array_slice($list, 0, 10));
+  echo json_encode(hof_aggregate(hof_read($mode)));
   exit;
 }
 
-// ── POST: append entry to full history, persist, return top 10 ──────────────
+// ── POST: append entry, persist full history, return per-sentence leaderboard ─
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $body = json_decode(file_get_contents('php://input'), true);
   if (!$body) { http_response_code(400); echo '{"ok":false}'; exit; }
@@ -49,7 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $e = $body['entry'] ?? [];
 
-  // Country code comes from the client (pre-fetched via ipapi.co); validate strictly
   $raw     = strtoupper(substr((string)($e['country'] ?? ''), 0, 2));
   $country = (strlen($raw) === 2 && ctype_alpha($raw)) ? $raw : '';
   $flag    = flag_emoji($country);
@@ -60,6 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     'remaining' => (int)($e['remaining'] ?? 0),
     'corrected' => (int)($e['corrected'] ?? 0),
     'pack'      => substr(strip_tags($e['pack']      ?? ''), 0, 32),
+    'sentence'  => substr(strip_tags($e['sentence']  ?? ''), 0, 300),
     'flag'      => $flag,
     'country'   => $country,
     'date'      => substr($e['date']     ?? '', 0, 32),
@@ -72,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   $content = stream_get_contents($fp);
   $list    = $content ? (json_decode($content, true) ?? []) : [];
-  $list[]  = $record;               // keep full history
+  $list[]  = $record;
 
   rewind($fp);
   ftruncate($fp, 0);
@@ -80,8 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   flock($fp, LOCK_UN);
   fclose($fp);
 
-  hof_sort($list);
-  echo json_encode(['ok' => true, 'entries' => array_slice($list, 0, 10)]);
+  echo json_encode(['ok' => true, 'entries' => hof_aggregate($list)]);
   exit;
 }
 

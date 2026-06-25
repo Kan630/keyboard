@@ -41,12 +41,12 @@
     <button id="btnBlind">👁 Show keyboard</button>
   </div>
   <div class="ctrl-row">
+    <button id="btnAudio">🔇 Audio</button>
     <div class="ctrl-group">
       <label for="voiceSel">Voice</label>
       <select id="voiceSel"></select>
     </div>
-    <button id="btnAudio">🔇 Audio</button>
-    <button id="btnAudioMode">Per key</button>
+    <button id="btnAudioMode">Per word</button>
   </div>
 </div>
 
@@ -68,6 +68,7 @@
     <button id="btnNewSentence">↺ New sentence</button>
   </div>
   <div class="exercise-target" id="exerciseTarget"></div>
+  <div class="ex-sent-stats" id="exSentenceStats" hidden></div>
 </div>
 
 <div class="practice">
@@ -85,12 +86,26 @@
 
 <div class="hof-panel" id="hofPanelSentence" hidden>
   <h2>📝 Sentence — Hall of Fame</h2>
-  <table class="hof-table" id="hofTableSentence"></table>
+  <div class="hof-sub" id="hofMyRecordsSentence" hidden>
+    <div class="hof-sub-title">👤 <span id="hofMyNameSentence"></span> — My Records</div>
+    <table class="hof-table" id="hofTableMySentence"></table>
+  </div>
+  <div class="hof-sub" id="hofGlobalSentence" hidden>
+    <div class="hof-sub-title">🌍 All users · All-time bests</div>
+    <table class="hof-table" id="hofTableGlobalSentence"></table>
+  </div>
 </div>
 
 <div class="hof-panel" id="hofPanelAccount" hidden>
   <h2>🔢 Accountant — Hall of Fame</h2>
-  <table class="hof-table" id="hofTableAccount"></table>
+  <div class="hof-sub" id="hofMyRecordsAccount" hidden>
+    <div class="hof-sub-title">👤 <span id="hofMyNameAccount"></span> — My Records</div>
+    <table class="hof-table" id="hofTableMyAccount"></table>
+  </div>
+  <div class="hof-sub" id="hofGlobalAccount" hidden>
+    <div class="hof-sub-title">🌍 All users · All-time bests</div>
+    <table class="hof-table" id="hofTableGlobalAccount"></table>
+  </div>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" hidden>
@@ -128,7 +143,7 @@ const CONFIG = {
 // ═══════════════════════════════════════════════════════════
 let layout         = LAYOUTS[CONFIG.defaultLayout];
 let audioOn        = CONFIG.audioOn;
-let audioMode      = "key";     // "key" | "word"
+let audioMode      = "word";    // "key" | "word"
 let blindMode      = false;
 let numpadVisible  = false;
 let numpadDetected = false;
@@ -216,8 +231,11 @@ document.getElementById("voiceSel").addEventListener("change", e => {
 function speak(ch) {
   if (!audioOn || !ch) return;
   if (audioMode === "word") {
-    if (ch === " " || ch === "\n") {
-      const words = typed.join("").trim().split(/[\s\n]+/);
+    if (/[ \n.,;:!?]/.test(ch)) {
+      const all  = typed.join("");
+      // For punctuation, strip the just-typed char so it isn't part of the word
+      const text = (ch === " " || ch === "\n") ? all.trim() : all.slice(0, -1).trim();
+      const words = text.split(/[\s\n.,;:!?]+/);
       const last  = words[words.length - 1];
       if (!last) return;
       speechSynthesis.cancel();
@@ -483,8 +501,23 @@ function pickSentence() {
   return list[Math.floor(Math.random() * list.length)] ?? "";
 }
 
+// Returns { name, data } where data is the sentence-keyed map for the current player only.
+// Storage format: kbm_personal_<mode> = { "<playerName>": { "<sentence>": {...} } }
+function getMyPersonal(hofMode) {
+  const name = localStorage.getItem("kbm_player") || "";
+  if (!name) return { name: "", data: {} };
+  let all = {};
+  try { all = JSON.parse(localStorage.getItem(`kbm_personal_${hofMode}`) || '{}'); } catch {}
+  if (typeof all !== 'object' || Array.isArray(all)) all = {};
+  const d = all[name];
+  return { name, data: (d && typeof d === 'object' && !Array.isArray(d)) ? d : {} };
+}
+
 function updateThemeSel() {
   const modeFilter = mode === "accountant" ? "accountant" : "sentence";
+  const hofMode    = modeFilter;
+  const { data: personal } = getMyPersonal(hofMode);
+
   const sel = document.getElementById("themeSel");
   sel.innerHTML = "";
   Object.entries(SENTENCE_PACKS)
@@ -492,11 +525,30 @@ function updateThemeSel() {
     .forEach(([key, pack]) => {
       const o = document.createElement("option");
       o.value = key;
-      o.textContent = (pack.flag ? pack.flag + "  " : "") + pack.label;
+      const sentences  = pack.sentences ?? [];
+      const tries      = sentences.reduce((s, sent) => s + (personal[sent]?.wpms?.length ?? 0), 0);
+      const triesPart  = tries > 0 ? ` · ${tries} tries` : '';
+      o.textContent = (pack.flag ? pack.flag + "  " : "") + pack.label
+                    + ` (${sentences.length} sentences${triesPart})`;
       o.selected = (key === sentPackKey);
       sel.appendChild(o);
     });
   document.getElementById("themeBar").hidden = (mode === "free");
+}
+
+function renderExSentenceStats() {
+  const el = document.getElementById("exSentenceStats");
+  const hofMode = mode === "accountant" ? "accountant" : "sentence";
+  const { data: personal } = getMyPersonal(hofMode);
+  const s = personal[exSentence];
+  if (!s || !s.wpms || !s.wpms.length) { el.hidden = true; return; }
+  const mean_wpm = Math.round(s.wpms.reduce((a, b) => a + b, 0) / s.wpms.length);
+  el.hidden = false;
+  el.innerHTML = `
+    <span class="ex-stat"><span class="ex-stat-val">${s.wpms.length}</span><span class="ex-stat-lbl">tries</span></span>
+    <span class="ex-stat"><span class="ex-stat-val">${s.best_wpm}</span><span class="ex-stat-lbl">best WPM</span></span>
+    <span class="ex-stat"><span class="ex-stat-val">${mean_wpm}</span><span class="ex-stat-lbl">mean WPM</span></span>
+  `;
 }
 
 function startExercise() {
@@ -510,6 +562,7 @@ function startExercise() {
   autoSkipSpaces();
   renderExercise();
   renderExStats();
+  renderExSentenceStats();
   if (exSentMode === "hear" || exSentMode === "both") speakSentence(exSentence);
 }
 
@@ -612,6 +665,7 @@ function handleExKey(e, isNumpad) {
   if (!raw) return;
 
   if (mode === "accountant" && raw === " ") return;
+  if (exTyped.length >= exSentence.length) return;  // sentence full — must fix errors first
 
   const chars = composeChar(raw);
   if (!chars.length) return;
@@ -623,6 +677,7 @@ function handleExKey(e, isNumpad) {
 
   for (const ch of chars) {
     autoSkipSpaces();
+    if (exTyped.length >= exSentence.length) break;
     exTyped.push(ch);
     speak(ch);
   }
@@ -631,9 +686,14 @@ function handleExKey(e, isNumpad) {
   renderExStats();
 
   if (exTyped.length >= exSentence.length) {
-    clearInterval(exTimerID);
-    exCompleted = true;
-    setTimeout(showCompletion, 350);
+    const allCorrect = [...exSentence].every((c, i) =>
+      (mode === "accountant" && c === " ") || exTyped[i] === c
+    );
+    if (allCorrect) {
+      clearInterval(exTimerID);
+      exCompleted = true;
+      setTimeout(showCompletion, 350);
+    }
   }
 }
 
@@ -709,32 +769,82 @@ async function getCountryCode() {
 }
 
 function renderHof(m, entries) {
-  const panelId = m === "accountant" ? "hofPanelAccount" : "hofPanelSentence";
-  const tableId = m === "accountant" ? "hofTableAccount" : "hofTableSentence";
-  const panel = document.getElementById(panelId);
-  if (!entries.length) { panel.hidden = true; return; }
-  panel.hidden = false;
-  const medals = ["🥇","🥈","🥉"];
-  document.getElementById(tableId).innerHTML = `
-    <tr>
-      <th>#</th><th></th><th>Name</th><th>WPM</th><th>Accuracy</th>
-      <th title="Wrong chars at end">Remaining</th>
-      <th title="Backspaces used">Corrections</th>
-      <th>Pack</th><th>Date</th>
-    </tr>
-    ${entries.map((e, i) => `
-      <tr class="${i < 3 ? "hof-rank-"+(i+1) : ""}">
-        <td class="rank">${medals[i] ?? i+1}</td>
-        <td style="font-size:1.1em" title="${x(e.country ?? "")}">${e.flag ?? ""}</td>
-        <td class="name">${x(e.name)}</td>
-        <td class="wpm">${e.wpm}</td>
-        <td>${e.accuracy}%</td>
-        <td>${e.remaining ?? 0}</td>
-        <td>${e.corrected ?? 0}</td>
-        <td class="muted">${x(e.pack ?? "")}</td>
-        <td>${e.date}</td>
-      </tr>`).join("")}
-  `;
+  const s        = m === "accountant" ? "Account" : "Sentence";
+  const panel    = document.getElementById(`hofPanel${s}`);
+  const medals   = ["🥇","🥈","🥉"];
+  const trunc    = (str, n) => str.length > n ? x(str.slice(0, n)) + '…' : x(str);
+
+  // ── My Records (localStorage, current player only) ───────────────────────────
+  const { name: playerName, data: personal } = getMyPersonal(m);
+  const mySubEl  = document.getElementById(`hofMyRecords${s}`);
+  const myTable  = document.getElementById(`hofTableMy${s}`);
+
+  const myRows = playerName ? Object.values(personal)
+    .filter(e => e.wpms && e.wpms.length > 0)
+    .map(e => ({ ...e,
+      mean_wpm: Math.round(e.wpms.reduce((a, b) => a + b, 0) / e.wpms.length),
+      count: e.wpms.length,
+    }))
+    .sort((a, b) => b.best_wpm - a.best_wpm) : [];
+
+  if (myRows.length) {
+    document.getElementById(`hofMyName${s}`).textContent = playerName;
+    myTable.innerHTML = `
+      <tr>
+        <th>#</th><th>Sentence</th>
+        <th title="Best WPM — no remaining errors">Best</th>
+        <th title="Mean WPM — no remaining errors">Mean</th>
+        <th>Tries</th><th>Last date</th>
+      </tr>
+      ${myRows.slice(0, 10).map((e, i) => `
+        <tr class="hof-personal">
+          <td class="rank">${medals[i] ?? i + 1}</td>
+          <td class="hof-sentence" title="${x(e.sentence)}">${trunc(e.sentence, 48)}</td>
+          <td class="wpm">${e.best_wpm}</td>
+          <td>${e.mean_wpm}</td>
+          <td class="muted">${e.count}</td>
+          <td class="muted">${e.best_date}</td>
+        </tr>`).join("")}
+    `;
+    mySubEl.hidden = false;
+  } else {
+    mySubEl.hidden = true;
+  }
+
+  // ── All-time global (server): top-3 per sentence ─────────────────────────────
+  const globalSubEl = document.getElementById(`hofGlobal${s}`);
+  const globalTable = document.getElementById(`hofTableGlobal${s}`);
+
+  if (entries.length) {
+    globalTable.innerHTML = `
+      <tr>
+        <th>#</th><th></th><th>Name</th>
+        <th title="WPM — no remaining errors">WPM</th>
+        <th title="Backspaces used">Corr.</th><th>Date</th>
+      </tr>
+      ${entries.map(e => `
+        <tr class="hof-sent-header">
+          <td colspan="6" title="${x(e.sentence)}">
+            ${trunc(e.sentence, 65)}<span class="hof-pack">${x(e.pack ?? "")}</span>
+          </td>
+        </tr>
+        ${e.runs.map((r, i) => `
+          <tr class="hof-rank-${i + 1}">
+            <td class="rank">${medals[i]}</td>
+            <td class="hof-flag">${r.flag ?? ""}</td>
+            <td class="name">${x(r.name)}</td>
+            <td class="wpm">${r.wpm}</td>
+            <td class="muted">${r.corrected ?? 0}</td>
+            <td class="muted">${r.date}</td>
+          </tr>`).join("")}
+      `).join("")}
+    `;
+    globalSubEl.hidden = false;
+  } else {
+    globalSubEl.hidden = true;
+  }
+
+  panel.hidden = !myRows.length && !entries.length;
 }
 
 async function refreshHof(m) {
@@ -872,15 +982,33 @@ async function saveAndNext() {
   setPlayerBadge(name);
   const r       = exLastResults;
   const now     = new Date();
-  const date    = now.toLocaleDateString() + ' '
-                + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+  const pad     = n => String(n).padStart(2, '0');
+  const date    = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
   const hofMode = mode === "accountant" ? "accountant" : "sentence";
   const pack    = SENTENCE_PACKS[sentPackKey];
   const packTag = pack ? `${pack.code ?? sentPackKey} v${pack.version ?? 1}` : sentPackKey;
-  const country = _countryCache ?? '';
+  const country           = _countryCache ?? '';
+  const sentenceCompleted = exSentence;  // capture before startExercise() resets it
+
+  if (r.remaining === 0) {
+    const personalKey = `kbm_personal_${hofMode}`;
+    let all = {};
+    try { all = JSON.parse(localStorage.getItem(personalKey) || '{}'); } catch {}
+    if (typeof all !== 'object' || Array.isArray(all)) all = {};
+    if (!all[name] || typeof all[name] !== 'object') all[name] = {};
+    const mine = all[name];
+    if (!mine[sentenceCompleted]) mine[sentenceCompleted] = { sentence: sentenceCompleted, pack: packTag, wpms: [], best_wpm: 0, best_date: '' };
+    mine[sentenceCompleted].wpms.push(r.wpm);
+    if (r.wpm > mine[sentenceCompleted].best_wpm) {
+      mine[sentenceCompleted].best_wpm = r.wpm;
+      mine[sentenceCompleted].best_date = date;
+    }
+    localStorage.setItem(personalKey, JSON.stringify(all));
+  }
 
   document.getElementById("modalOverlay").hidden = true;
   startExercise();
+  updateThemeSel();
   _saveGuard = false;
 
   logEvent('exercise_complete', {
@@ -889,7 +1017,8 @@ async function saveAndNext() {
   });
   const entries = await hofPost(
     { name, wpm: r.wpm, accuracy: r.accuracy,
-      remaining: r.remaining, corrected: r.corrected, date, pack: packTag, country },
+      remaining: r.remaining, corrected: r.corrected, date, pack: packTag, country,
+      sentence: sentenceCompleted },
     hofMode
   );
   renderHof(hofMode, entries.length ? entries : await hofFetch(hofMode));
@@ -921,6 +1050,7 @@ document.getElementById("badge").textContent        = CONFIG.instance;
 document.getElementById("versionBadge").textContent = CONFIG.version;
 document.title = `Keyboard Master — ${CONFIG.instance}`;
 setPlayerBadge(localStorage.getItem("kbm_player") || "");
+document.getElementById("btnAudioMode").classList.add("on");
 document.getElementById("numpad").hidden = true;
 numpadVisible  = false;
 numpadDetected = false;

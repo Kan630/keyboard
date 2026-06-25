@@ -8,6 +8,20 @@
 
 const SENTENCE_PACKS = {
 
+  // ── Quick test ──────────────────────────────────────────
+  "quick-test": {
+    label:   "Quick Test",
+    code:    "quick-test",
+    version: 1,
+    flag:    "⚡",
+    lang:    "en-US",
+    mode:    "sentence",
+    sentences: [
+      "qsdf",
+      "jklm",
+    ],
+  },
+
   // ── Writer: English ─────────────────────────────────────
   "en": {
     label:   "English — Practice",
