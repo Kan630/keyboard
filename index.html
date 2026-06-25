@@ -92,7 +92,7 @@
 <div class="hof-panel" id="hofPanelSentence" hidden>
   <h2>📝 Writer — Hall of Fame</h2>
   <div class="hof-sub" id="hofMyRecordsSentence" hidden>
-    <div class="hof-sub-title">👤 <span id="hofMyNameSentence"></span> — My Records</div>
+    <div class="hof-sub-title"><span id="hofMyFlagSentence">👤</span> <span id="hofMyNameSentence"></span> — My Records</div>
     <table class="hof-table" id="hofTableMySentence"></table>
   </div>
   <div class="hof-sub" id="hofGlobalSentence" hidden>
@@ -104,7 +104,7 @@
 <div class="hof-panel" id="hofPanelAccount" hidden>
   <h2>🔢 Accountant — Hall of Fame</h2>
   <div class="hof-sub" id="hofMyRecordsAccount" hidden>
-    <div class="hof-sub-title">👤 <span id="hofMyNameAccount"></span> — My Records</div>
+    <div class="hof-sub-title"><span id="hofMyFlagAccount">👤</span> <span id="hofMyNameAccount"></span> — My Records</div>
     <table class="hof-table" id="hofTableMyAccount"></table>
   </div>
   <div class="hof-sub" id="hofGlobalAccount" hidden>
@@ -136,7 +136,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.92.01",
+  version:       "v0.92.02",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -737,6 +737,11 @@ function showCompletion() {
 // ═══════════════════════════════════════════════════════════
 //  HALL OF FAME
 // ═══════════════════════════════════════════════════════════
+function playerFlagEmoji() {
+  const c = _countryCache;
+  if (!c || c.length !== 2) return '👤';
+  return [...c].map(ch => String.fromCodePoint(0x1F1E6 + ch.charCodeAt(0) - 65)).join('');
+}
 async function hofFetch(m) {
   try {
     const r = await fetch(`hof.php?mode=${m}`);
@@ -793,7 +798,8 @@ function renderHof(m, entries) {
     .sort((a, b) => b.best_wpm - a.best_wpm) : [];
 
   if (myRows.length) {
-    document.getElementById(`hofMyName${s}`).textContent = playerName;
+    document.getElementById(`hofMyName${s}`).textContent  = playerName;
+    document.getElementById(`hofMyFlag${s}`).textContent  = playerFlagEmoji();
     myTable.innerHTML = `
       <tr>
         <th>#</th><th>Sentence</th>
@@ -839,8 +845,8 @@ function renderHof(m, entries) {
             <td class="hof-flag">${r.flag ?? ""}</td>
             <td class="name">${x(r.name)}</td>
             <td class="wpm">${r.wpm}</td>
-            <td class="muted">${r.corrected ?? 0}</td>
-            <td class="muted">${r.date}</td>
+            <td class="muted corr-cell">${r.corrected ?? 0}</td>
+            <td class="muted date-cell">${r.date}</td>
           </tr>`).join("")}
       `).join("")}
     `;
@@ -889,7 +895,7 @@ document.getElementById("btnAudioMode").addEventListener("click", function () {
 
 document.getElementById("btnBlind").addEventListener("click", function () {
   blindMode = !blindMode;
-  document.getElementById("kbWrap").classList.toggle("blind", blindMode);
+  document.getElementById("kbWrap").hidden = blindMode;
   this.textContent = blindMode ? "🙈 Blind mode" : "👁 Show keyboard";
   this.classList.toggle("on", blindMode);
   this.blur();
