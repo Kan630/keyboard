@@ -15,6 +15,11 @@
 </header>
 
 <div class="mode-bar">
+  <button class="mode-card" id="btnModeFree">
+    <span class="mode-icon">⌨️</span>
+    <span class="mode-name">Free Typing</span>
+    <span class="mode-desc">Practice without scoring</span>
+  </button>
   <button class="mode-card" id="btnModeSentence">
     <span class="mode-icon">📝</span>
     <span class="mode-name">Writer</span>
@@ -85,7 +90,7 @@
 </div>
 
 <div class="hof-panel" id="hofPanelSentence" hidden>
-  <h2>📝 Sentence — Hall of Fame</h2>
+  <h2>📝 Writer — Hall of Fame</h2>
   <div class="hof-sub" id="hofMyRecordsSentence" hidden>
     <div class="hof-sub-title">👤 <span id="hofMyNameSentence"></span> — My Records</div>
     <table class="hof-table" id="hofTableMySentence"></table>
@@ -131,7 +136,7 @@
 // ═══════════════════════════════════════════════════════════
 const CONFIG = {
   instance:      "driot.com · A",   // shown in badge bottom-right
-  version:       "v0.91.26",
+  version:       "v0.92.01",
   defaultLayout: "ch-fr-qwertz",
   audioOn:       false,
   speechRate:    0.88,
@@ -844,7 +849,7 @@ function renderHof(m, entries) {
     globalSubEl.hidden = true;
   }
 
-  panel.hidden = !myRows.length && !entries.length;
+  panel.hidden = (mode !== m) || (!myRows.length && !entries.length);
 }
 
 async function refreshHof(m) {
@@ -893,8 +898,8 @@ document.getElementById("btnBlind").addEventListener("click", function () {
 document.getElementById("btnClear").addEventListener("click", function () { reset(); this.blur(); });
 
 function activateMode(newMode) {
-  const wasEx = mode !== "free";
-  mode = (mode === newMode) ? "free" : newMode;
+  if (mode === newMode) return;
+  mode = newMode;
   const isEx = mode !== "free";
 
   if (mode === "accountant") sentPackKey = "numpad";
@@ -902,6 +907,7 @@ function activateMode(newMode) {
     sentPackKey = CONFIG.preferLang === "fr" ? "fr" : "en";
   }
 
+  document.getElementById("btnModeFree").classList.toggle("on",     mode === "free");
   document.getElementById("btnModeSentence").classList.toggle("on", mode === "sentence");
   document.getElementById("btnModeAccount").classList.toggle("on",  mode === "accountant");
   document.getElementById("exercisePanel").hidden = !isEx;
@@ -909,18 +915,26 @@ function activateMode(newMode) {
   document.getElementById("display").hidden       = isEx;
   updateThemeSel();
 
+  // Hide both HoF panels; renderHof will re-show the relevant one if content exists
+  document.getElementById("hofPanelSentence").hidden = true;
+  document.getElementById("hofPanelAccount").hidden  = true;
+
   if (isEx) {
     if (mode === "accountant") {
       numpadVisible = true;
       document.getElementById("numpad").hidden = false;
     }
     startExercise();
+    refreshHof(mode === "accountant" ? "accountant" : "sentence");
   } else {
     clearInterval(exTimerID);
     reset();
   }
 }
 
+document.getElementById("btnModeFree").addEventListener("click", function () {
+  activateMode("free"); this.blur();
+});
 document.getElementById("btnModeSentence").addEventListener("click", function () {
   activateMode("sentence"); this.blur();
 });
@@ -1057,8 +1071,7 @@ numpadDetected = false;
 renderKeyboard();
 renderNumpad();
 renderDisplay();
-refreshHof("sentence");
-refreshHof("accountant");
+activateMode("sentence");
 getCountryCode();  // pre-fetch in background; result cached for HoF submission
 logEvent('visit');
 </script>
